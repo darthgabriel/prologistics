@@ -1,0 +1,60 @@
+/* customs styles */
+button, a  {
+    text-transform: uppercase;
+}
+
+.container {
+    height: 30rem;
+    width: 40rem;
+}
+
+.imgLogo {
+    max-width: 100%;
+    height: auto;
+    width: 250px;
+}
+
+.imgFooter {
+    height: auto;
+    width: 150px;
+}
+
+.mitsu {
+    height: auto;
+    width: 70px;
+    object-fit: contain;
+}
+
+.karry {
+    height: auto;
+    width: 100px;
+    object-fit: contain;
+}
+
+.gradient {
+    background-image: linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%);
+    border-radius: 10px;
+    margin-top: 5vh;
+}
+
+.letra {
+    font-weight: bolder;
+    font-size: smaller;
+    font-style: oblique;
+    color: #061946;
+    text-align: center;
+}
+
+.footer {
+    margin-top: 10vh;
+    height: 6rem;
+    background: rgb(188,198,208);
+    background: linear-gradient(90deg, rgba(188,198,208,1) 33%, rgba(92,123,154,1) 83%);
+}
+
+.totales {
+    background-color: #373a3c !important;
+    color: white;
+    font-weight: bold;
+  }
+
