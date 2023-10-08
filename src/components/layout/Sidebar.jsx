@@ -17,19 +17,19 @@ const ADMIN_MENU = [
     icon: 'bi-house-fill'
   },
   {
-    name: 'Encuestas',
-    path: '/encuestas/read',
-    icon: 'bi-cart-dash-fill'
-  },
-  {
     name: 'Preguntas',
     path: '/preguntas/read',
-    icon: 'bi-cart-plus-fill'
+    icon: 'bi-question-circle-fill'
+  },
+  {
+    name: 'Encuestas',
+    path: '/encuestas/read',
+    icon: 'bi-file-earmark-bar-graph-fill'
   },
   {
     name: 'Clientes',
     path: '/clientes/read',
-    icon: 'bi-inboxes-fill'
+    icon: 'bi-people-fill'
   }
 ]
 

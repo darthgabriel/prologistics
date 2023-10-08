@@ -10,7 +10,6 @@ export default function useUser () {
 
   useEffect(() => {
     if (Object.keys(userState).length > 0) {
-      console.log('🚀 ~ userState:', userState)
       setUserLocal(userState)
       setLoading(false)
     } else {

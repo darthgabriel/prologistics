@@ -1,7 +1,9 @@
 import React, { useCallback } from 'react'
 import { useRouter } from 'next/router'
-import protectedRoute from '@/lib/auth/protectedRoute'
 import userStore from '@/lib/store/userStore'
+
+import protectedRoute from '@/lib/auth/protectedRoute'
+export const getServerSideProps = protectedRoute()
 
 const profilePage = ({ user }) => {
   const logoutState = userStore((state) => state.logout)
@@ -51,7 +53,5 @@ const profilePage = ({ user }) => {
     </div>
   )
 }
-
-export const getServerSideProps = protectedRoute()
 
 export default profilePage
