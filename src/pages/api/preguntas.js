@@ -1,5 +1,7 @@
-import { query } from '@/lib/mysql'
 import { getAllEncuestas } from './encuestas'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 export default function (req, res) {
   const { method } = req
@@ -11,8 +13,8 @@ export default function (req, res) {
 }
 
 const getAllPreguntas = async () => {
-  const preguntas = await query('SELECT * FROM preguntas_base')
-  const preguntasSeleccion = await query('SELECT * FROM preguntas_seleccion')
+  const preguntas = await prisma.prologistics_preguntasBase.findMany()
+  const preguntasSeleccion = await prisma.prologistics_preguntasSeleccion.findMany()
   return preguntas.map((pregunta) => {
     const seleccion = preguntasSeleccion.filter((item) => item.id_pregunta === pregunta.id)
     const cadena = preguntas.find((item) => item.id === pregunta.id_pregCadena)
@@ -23,7 +25,7 @@ const getAllPreguntas = async () => {
     }
 
     return formatReturn
-  })
+  }).reverse()
 }
 
 export async function getPreguntas (req, res) {
@@ -43,7 +45,8 @@ async function createPregunta (req, res) {
     isTexto: data.isTexto,
     isFecha: data.isFecha,
     isSeleccion: data.isSeleccion,
-    id_pregCadena: data.id_pregCadena,
+    id_pregCadena: data?.id_pregCadena || null,
+    condicion: data?.condicion || null,
     obligatoria: data.obligatoria
   }
 
@@ -57,19 +60,20 @@ async function createPregunta (req, res) {
     if (baseToInsert.isSeleccion === null || baseToInsert.isSeleccion === '') throw new Error('Hubo un problema con el tipo de pregunta')
     if (baseToInsert.isSeleccion === true && data.seleccion.length <= 1) throw new Error('Debe tener mas de una seleccion')
     if (baseToInsert.obligatoria === null || baseToInsert.obligatoria === '') throw new Error('Hubo un problema con el tipo de pregunta')
-    if (baseToInsert.id_pregCadena) {
+    if (baseToInsert?.id_pregCadena) {
       baseToInsert.condicion = data.seleccion.at(0)
     }
-    const { insertId } = await query('INSERT INTO preguntas_base SET ?', baseToInsert)
-    let queryData = 'SELECT 1+1'
+    const preguntaBase = await prisma.prologistics_preguntasBase.create({
+      data: baseToInsert
+    })
     if (baseToInsert.isSeleccion === true) {
-      queryData = 'INSERT INTO preguntas_seleccion (id_pregunta, valor) VALUES '
-      data.seleccion.forEach((item) => {
-        queryData += `(${insertId}, '${item}'),`
+      await prisma.prologistics_preguntasSeleccion.createMany({
+        data: data.seleccion.map((item) => ({
+          id_pregunta: preguntaBase.id,
+          valor: item
+        }))
       })
-      queryData = queryData.slice(0, -1)
     }
-    await query(queryData)
     return res.status(200).json({ message: 'Pregunta creada' })
   } catch (error) {
     return res.status(401).json({ error: error.message })
@@ -79,13 +83,13 @@ async function createPregunta (req, res) {
 async function updatePregunta (req, res) {
   const { body: data } = req
 
-  const baseToInsert = {
+  const baseToUpdate = {
     titulo: String(data.titulo).toLowerCase().trim(),
     isTexto: data.isTexto,
     isFecha: data.isFecha,
     isSeleccion: data.isSeleccion,
-    id_pregCadena: data.id_pregCadena,
-    condicion: data.condicion,
+    id_pregCadena: data?.id_pregCadena || null,
+    condicion: data?.condicion || null,
     obligatoria: data.obligatoria
   }
 
@@ -93,31 +97,34 @@ async function updatePregunta (req, res) {
     const preguntas = await getAllPreguntas()
     const preguntaExist = preguntas.find((pregunta) => pregunta.id === data.id)
     if (!preguntaExist) throw new Error('La pregunta no existe')
-    if (baseToInsert.titulo === null || baseToInsert.titulo === '') throw new Error('El titulo es requerido')
-    const preguntaRepetida = preguntas.find((pregunta) => pregunta.titulo === baseToInsert.titulo && pregunta.id !== data.id)
+    if (baseToUpdate.titulo === null || baseToUpdate.titulo === '') throw new Error('El titulo es requerido')
+    const preguntaRepetida = preguntas.find((pregunta) => pregunta.titulo === baseToUpdate.titulo && pregunta.id !== data.id)
     if (preguntaRepetida) throw new Error('La pregunta ya existe')
-    if (baseToInsert.isTexto === null || baseToInsert.isTexto === '') throw new Error('Hubo un problema con el tipo de pregunta')
-    if (baseToInsert.isFecha === null || baseToInsert.isFecha === '') throw new Error('Hubo un problema con el tipo de pregunta')
-    if (baseToInsert.isSeleccion === null || baseToInsert.isSeleccion === '') throw new Error('Hubo un problema con el tipo de pregunta')
-    if (baseToInsert.isSeleccion === true && data.seleccion.length <= 1) throw new Error('Debe tener mas de una seleccion')
-    if (baseToInsert.obligatoria === null || baseToInsert.obligatoria === '') throw new Error('Hubo un problema con el tipo de pregunta')
-    if (baseToInsert.id_pregCadena) {
-      baseToInsert.condicion = data.seleccion.at(0)
+    if (baseToUpdate.isTexto === null || baseToUpdate.isTexto === '') throw new Error('Hubo un problema con el tipo de pregunta')
+    if (baseToUpdate.isFecha === null || baseToUpdate.isFecha === '') throw new Error('Hubo un problema con el tipo de pregunta')
+    if (baseToUpdate.isSeleccion === null || baseToUpdate.isSeleccion === '') throw new Error('Hubo un problema con el tipo de pregunta')
+    if (baseToUpdate.isSeleccion === true && data.seleccion.length <= 1) throw new Error('Debe tener mas de una seleccion')
+    if (baseToUpdate.obligatoria === null || baseToUpdate.obligatoria === '') throw new Error('Hubo un problema con el tipo de pregunta')
+    if (baseToUpdate?.id_pregCadena) {
+      baseToUpdate.condicion = data.seleccion.at(0)
     }
 
-    await query('UPDATE preguntas_base SET ? WHERE id = ?', [baseToInsert, data.id])
+    await prisma.prologistics_preguntasBase.update({
+      where: { id: data.id },
+      data: baseToUpdate
+    })
 
-    let queryData = 'SELECT 1+1'
-    if (baseToInsert.isSeleccion === true) {
-      await query('DELETE FROM preguntas_seleccion WHERE id_pregunta = ?', data.id)
-      queryData = 'INSERT INTO preguntas_seleccion (id_pregunta, valor) VALUES '
-      data.seleccion.forEach((item) => {
-        queryData += `(${data.id}, '${item}'),`
+    if (baseToUpdate.isSeleccion === true) {
+      await prisma.prologistics_preguntasSeleccion.deleteMany({
+        where: { id_pregunta: data.id }
       })
-      queryData = queryData.slice(0, -1)
+      await prisma.prologistics_preguntasSeleccion.createMany({
+        data: data.seleccion.map((item) => ({
+          id_pregunta: data.id,
+          valor: item
+        }))
+      })
     }
-
-    await query(queryData)
     return res.status(200).json({ message: 'Pregunta actualizada' })
   } catch (error) {
     return res.status(401).json({ error: error.message })
@@ -137,8 +144,12 @@ async function deletePregunta (req, res) {
       return null
     })
     if (encuestaPreguntaTake) throw new Error('La pregunta esta asignada a una encuesta')
-    await query('DELETE FROM preguntas_base WHERE id = ?', data.id)
-    await query('DELETE FROM preguntas_seleccion WHERE id_pregunta = ?', data.id)
+    await prisma.prologistics_preguntasBase.delete({
+      where: { id: data.id }
+    })
+    await prisma.prologistics_preguntasSeleccion.deleteMany({
+      where: { id_pregunta: data.id }
+    })
     return res.status(200).json({ message: 'Pregunta eliminada' })
   } catch (error) {
     return res.status(401).json({ error: error.message })

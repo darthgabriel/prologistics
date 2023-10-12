@@ -1,4 +1,6 @@
-import { query } from '@/lib/mysql'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 export default function (req, res) {
   const { method } = req
@@ -7,8 +9,8 @@ export default function (req, res) {
 }
 
 export const getAllEncuestas = async () => {
-  const encuestasBases = await query('SELECT * FROM encuestas_base')
-  const encuestasData = await query('SELECT * FROM encuestas_data')
+  const encuestasBases = await prisma.encuestas_base.findMany()
+  const encuestasData = await prisma.encuestas_data.findMany()
   const encuestas = encuestasBases.map((encuesta) => {
     const data = encuestasData.filter((item) => item.id_encuesta === encuesta.id)
     return {

@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+ 
+ datasource db {
+  provider = "postgresql"
+  url = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+model prologistics_infoClientes {
+  id        Int      @id @default(autoincrement())
+  cedula      String @unique
+  primerNombre     String
+  segundoNombre     String
+  primerApellido     String
+  segundoApellido     String
+  telefono     String
+  createdAt DateTime @default(now())
+}
+
+model prologistics_preguntasBase {
+    id        Int      @id @default(autoincrement())
+    titulo      String @unique
+    isTexto     Boolean
+    isFecha    Boolean
+    isSeleccion   Boolean
+    id_pregCadena Int?
+    condicion String?
+    obligatoria Boolean
+    createdAt DateTime @default(now())
+}
+
+model prologistics_preguntasSeleccion {
+    id        Int      @id @default(autoincrement())
+    id_pregunta Int
+    valor      String
+    createdAt DateTime @default(now())
+}
+
+model prologistics_encuestasBase {
+    id        Int      @id @default(autoincrement())
+    titulo      String @unique
+    createdAt DateTime @default(now())
+}
+
+model prologistics_encuestasPreguntas {
+    id        Int      @id @default(autoincrement())
+    id_encuesta Int
+    id_pregunta Int
+    createdAt DateTime @default(now())
+}

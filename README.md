@@ -7,6 +7,22 @@
   "eslint.alwaysShowStatus": true,
 ```
 
+### linter en .eslintrc.js
+```
+{
+  "extends": "./node_modules/standard/eslintrc.json",
+  "rules": {
+    "camelcase": "off"
+  }
+}
+```
+
+### despues de updatear la schema de primsa usar siempre
+```
+npx prisma generate
+npx prisma db push
+```
+
 
 
 ### problemas con el git ignore */
