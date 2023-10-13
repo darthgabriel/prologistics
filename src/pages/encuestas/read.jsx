@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
-import { ReactSwal, Swaly } from '@/lib/toastSwal'
+import { Swaly } from '@/lib/toastSwal'
 import ConstruirMenu from '@/components/ConstruirMenu'
-import { useRouter } from 'next/router'
-import InputControl from '@/components/formControls/InputControl'
 
 import protectedRoute from '@/lib/auth/protectedRoute'
 export const getServerSideProps = protectedRoute()
