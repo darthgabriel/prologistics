@@ -3,7 +3,7 @@ import { getAllClientes } from './clientes'
 
 const prisma = new PrismaClient()
 
-export default function (req, res) {
+export default function handler (req, res) {
   const { method } = req
 
   if (method === 'POST') return createRepuestas(req, res)

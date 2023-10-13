@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
-export default function (req, res) {
+export default function handler (req, res) {
   const { method } = req
 
   if (method === 'GET') return getClientes(req, res)

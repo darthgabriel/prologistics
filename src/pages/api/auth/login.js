@@ -5,9 +5,9 @@ const ID = '1'
 const USERNAME = 'admin'
 const PASSWORD = '123456'
 
-export default withSessionRoute(createSessionRoute)
+export default withSessionRoute(handler)
 
-async function createSessionRoute (req, res) {
+async function handler (req, res) {
   if (req.method === 'POST') {
     const { username, password } = req.body
 
