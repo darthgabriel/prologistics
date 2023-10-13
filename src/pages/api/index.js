@@ -1,5 +1,5 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 
 export default function handler (req, res) {
-  res.status(400).json({ status: 'Forbidden 400' })
+  res.status(400).json({ status: 'retroll esto' })
 }
