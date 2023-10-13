@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import useUser from '@/hooks/useUser'
+import axios from 'axios'
 
 const GUEST_MENU = [
   {
@@ -22,7 +23,7 @@ const ADMIN_MENU = [
     icon: 'bi-question-circle-fill'
   },
   {
-    name: 'Encuestas',
+    name: 'Cuestionarios',
     path: '/encuestas/read',
     icon: 'bi-file-earmark-bar-graph-fill'
   },
@@ -36,13 +37,25 @@ const ADMIN_MENU = [
 export default function Sidebar () {
   const [isAuth, setIsAuth] = useState(false)
   const { user } = useUser()
+  const [encuestas, setEncuestas] = useState([])
 
   useEffect(() => {
     setIsAuth(false)
+    fetchCuestionarios()
     if (!user) return
     if (!Object.keys(user).length) return
     setIsAuth(true)
   }, [user])
+
+  const fetchCuestionarios = useCallback(async () => {
+    try {
+      const { data } = await axios.get('/api/encuestas')
+      if (data.length === 0) throw new Error('No hay cuestionarios creados')
+      setEncuestas(data)
+    } catch (error) {
+      console.log(error)
+    }
+  }, [])
 
   return (
     <div className='d-print-none'>
@@ -58,6 +71,11 @@ export default function Sidebar () {
           ))
           : ADMIN_MENU.map((item, index) => (
             <ItemMenu key={index} {...item} />
+          ))}
+        {!encuestas.length
+          ? null
+          : encuestas.map((e, i) => (
+            <ItemMenu key={i} name={e.titulo} path={`/cuestionarios/create?id=${e.id}`} icon='bi-pen-fill' />
           ))}
       </div>
 

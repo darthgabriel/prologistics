@@ -4,11 +4,12 @@ import { Swaly } from '@/lib/toastSwal'
 import axios from 'axios'
 import React, { useCallback, useEffect, useState } from 'react'
 
-import protectedRoute from '@/lib/auth/protectedRoute'
 import ConstruirMenu from '@/components/ConstruirMenu'
 import { menuPreguntas } from './read'
 import { useRouter } from 'next/router'
 import CheckControl from '@/components/formControls/CheckControl'
+
+import protectedRoute from '@/lib/auth/protectedRoute'
 export const getServerSideProps = protectedRoute()
 
 export default function preguntasCreate () {

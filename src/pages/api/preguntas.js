@@ -12,15 +12,20 @@ export default function (req, res) {
   return res.status(401).json({ error: 'NO PERMITIDO' })
 }
 
-const getAllPreguntas = async () => {
+export const getAllPreguntas = async () => {
   const preguntas = await prisma.prologistics_preguntasBase.findMany()
   const preguntasSeleccion = await prisma.prologistics_preguntasSeleccion.findMany()
   return preguntas.map((pregunta) => {
     const seleccion = preguntasSeleccion.filter((item) => item.id_pregunta === pregunta.id)
     const cadena = preguntas.find((item) => item.id === pregunta.id_pregCadena)
+    const seleccioncadena = preguntasSeleccion.filter((item) => item.id_pregunta === pregunta.id_pregCadena)
     const formatReturn = {
       ...pregunta,
       titulo_pregCadena: cadena ? cadena.titulo : null,
+      preguntaCadena: {
+        ...cadena,
+        seleccion: seleccioncadena
+      },
       seleccion
     }
 
@@ -137,6 +142,8 @@ async function deletePregunta (req, res) {
     const preguntas = await getAllPreguntas()
     const preguntaExist = preguntas.find((pregunta) => pregunta.id === data.id)
     if (!preguntaExist) throw new Error('La pregunta no existe')
+    const preguntaCadena = preguntas.find((pregunta) => pregunta.id_pregCadena === data.id)
+    if (preguntaCadena) throw new Error('La pregunta esta asignada a una pregunta cadena')
     const encuestas = await getAllEncuestas()
     const encuestaPreguntaTake = encuestas.find((encuesta) => {
       const pregunta = encuesta.data.find((item) => item.id_pregunta === data.id)

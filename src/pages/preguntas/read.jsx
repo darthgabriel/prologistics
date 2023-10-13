@@ -34,12 +34,13 @@ export default function preguntasRead () {
   const getPreguntas = async () => {
     try {
       const { data } = await axios.get('/api/preguntas')
+      if (data.length === 0) throw new Error('No hay preguntas')
       setPreguntas(data)
     } catch (error) {
       console.log(error)
       Swaly.fire({
         icon: 'error',
-        text: JSON.stringify(error?.response?.data) || 'Error al cargar la pregunta'
+        text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al cargar la pregunta'
       })
     }
   }

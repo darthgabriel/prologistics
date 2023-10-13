@@ -19,8 +19,8 @@
 
 ### despues de updatear la schema de primsa usar siempre
 ```
-npx prisma generate
 npx prisma db push
+npx prisma generate
 ```
 
 

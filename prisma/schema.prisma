@@ -16,6 +16,7 @@ model prologistics_infoClientes {
   primerApellido     String
   segundoApellido     String
   telefono     String
+  email    String
   createdAt DateTime @default(now())
 }
 
@@ -49,4 +50,13 @@ model prologistics_encuestasPreguntas {
     id_encuesta Int
     id_pregunta Int
     createdAt DateTime @default(now())
+}
+
+model prologistics_cuestionarios {
+  id       Int      @id @default(autoincrement())
+  id_cliente Int
+  id_encuesta Int
+  id_pregunta Int
+  respuesta String
+  createdAt DateTime @default(now())
 }
