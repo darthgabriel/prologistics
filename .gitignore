@@ -34,3 +34,4 @@ yarn-error.log*
 
 #custom
 package-lock.json
+.env*.local
