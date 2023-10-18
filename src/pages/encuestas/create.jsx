@@ -6,9 +6,35 @@ import { menuEncuestas } from './read'
 import InputControl from '@/components/formControls/InputControl'
 import { ReactSwal, Swaly } from '@/lib/toastSwal'
 import axios from 'axios'
+import { useRouter } from 'next/router'
 export const getServerSideProps = protectedRoute()
 
 export default function encuestasCreate () {
+  const router = useRouter()
+  const { id } = router.query
+  const [initialCuestionario, setInitialCuestionario] = useState()
+
+  useEffect(() => {
+    if (!id) return
+    fetchEncuesta()
+  }, [id])
+
+  const fetchEncuesta = useCallback(async () => {
+    try {
+      const { data } = await axios.get('/api/encuestas/')
+      if (data.length === 0) return
+      const encuesta = data.find(encuesta => encuesta.id === Number(id))
+      if (!encuesta) return
+      setInitialCuestionario(encuesta)
+    } catch (error) {
+      console.log(error)
+      Swaly.fire({
+        icon: 'error',
+        text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al cargar la encuesta'
+      })
+    }
+  }, [id])
+
   return (
     <>
       <ConstruirMenu menu={menuEncuestas} />
@@ -17,19 +43,79 @@ export default function encuestasCreate () {
           <h4 className='card-title'>Crear Cuestionario</h4>
         </div>
         <div className='card-body'>
-          <FormCreateEncuestas />
+          <FormCreateEncuestas initialCuestionario={initialCuestionario} />
         </div>
       </div>
     </>
   )
 }
 
-function FormCreateEncuestas () {
+function FormCreateEncuestas ({ initialCuestionario }) {
   const INITIAL_FORM = {
     titulo: ''
   }
   const [form, setForm] = useState(INITIAL_FORM)
   const [preguntas, setPreguntas] = useState([])
+  const [preguntasDisponibles, setPreguntasDisponibles] = useState([])
+  const [preguntasState, setPreguntasState] = useState([])
+  const router = useRouter()
+  useEffect(() => {
+    fetchPreguntas()
+  }, [])
+
+  useEffect(() => {
+    if (!initialCuestionario) return
+    if (preguntasDisponibles.length === 0) return
+    setForm({ titulo: initialCuestionario.titulo })
+    const formatPreguntas = initialCuestionario.data.map(e => {
+      const pregunta = preguntasDisponibles.find(pregunta => pregunta.id === e.id_pregunta)
+      let cadena = []
+      if (pregunta.id_pregCadena) {
+        cadena = agregarPreguntasCadenas(pregunta.id_pregCadena, cadena)
+      }
+      return {
+        id_pregunta: pregunta.id,
+        pregunta: pregunta.titulo,
+        isCadena: false,
+        cadena
+      }
+    })
+    setPreguntas(formatPreguntas)
+  }, [initialCuestionario, preguntasDisponibles])
+
+  useEffect(() => {
+    if (preguntas.length === 0) return
+    // eliminar de disponibles preguntas ya usadas
+    const preguntasUsadas = preguntas.map(pregunta => pregunta.id_pregunta)
+    const preguntasDisponiblesNew = preguntasState.filter(pregunta => !preguntasUsadas.includes(pregunta.id))
+    setPreguntasState(preguntasDisponiblesNew)
+  }, [preguntas])
+
+  const agregarPreguntasCadenas = (id_pregunta, cadena) => {
+    const preguntaCadena = preguntasDisponibles.find(preguntaF => preguntaF.id === id_pregunta)
+    if (preguntaCadena) {
+      cadena.push(preguntaCadena.titulo)
+      if (preguntaCadena.id_pregCadena) {
+        cadena = agregarPreguntasCadenas(preguntaCadena.id_pregCadena, cadena)
+      }
+    }
+    return cadena
+  }
+
+  const fetchPreguntas = useCallback(async () => {
+    try {
+      const { data } = await axios.get('/api/preguntas')
+      if (data.length === 0) throw new Error('No hay preguntas disponibles')
+      setPreguntasDisponibles(data)
+      setPreguntasState(data)
+    } catch (error) {
+      console.log(error)
+      ReactSwal.fire({
+        icon: 'error',
+        text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al cargar las preguntas'
+      })
+    }
+  }, [])
 
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault()
@@ -38,12 +124,16 @@ function FormCreateEncuestas () {
     try {
       await axios.post('/api/encuestas', {
         titulo: form.titulo,
-        preguntas: preguntas.filter(p => p.isCadena === false)
+        preguntas: preguntas.filter(p => p.isCadena === false),
+        update: initialCuestionario ? initialCuestionario.id : null
       })
       Swaly.fire({
         icon: 'success',
-        text: 'Cuestionario creado correctamente'
+        text: initialCuestionario ? 'Cuestionario actualizado' : 'Cuestionario creado'
       })
+      if (initialCuestionario) {
+        return router.push('/encuestas/read')
+      }
       setForm(INITIAL_FORM)
       setPreguntas([])
     } catch (error) {
@@ -70,7 +160,7 @@ function FormCreateEncuestas () {
       <div className='row'>
         <div className='col-sm-12'>
           <h4>Preguntas</h4>
-          <TablePreguntas preguntas={preguntas} setPreguntas={setPreguntas} />
+          <TablePreguntas preguntas={preguntas} setPreguntas={setPreguntas} preguntasDisponibles={preguntasDisponibles} preguntasState={preguntasState} />
         </div>
       </div>
       <div className='row'>
@@ -83,44 +173,25 @@ function FormCreateEncuestas () {
   )
 }
 
-function TablePreguntas ({ preguntas, setPreguntas }) {
+function TablePreguntas ({ preguntas, setPreguntas, preguntasDisponibles, preguntasState }) {
   const INITIAL_VALUE = {
     id_pregunta: '',
     pregunta: ''
   }
   const [form, setForm] = useState(INITIAL_VALUE)
-  const [preguntasDisponibles, setPreguntasDisponibles] = useState([])
-
-  useEffect(() => {
-    fetchPreguntas()
-  }, [])
-
-  const fetchPreguntas = useCallback(async () => {
-    try {
-      const { data } = await axios.get('/api/preguntas')
-      if (data.length === 0) throw new Error('No hay preguntas disponibles')
-      setPreguntasDisponibles(data)
-    } catch (error) {
-      console.log(error)
-      ReactSwal.fire({
-        icon: 'error',
-        text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al cargar las preguntas'
-      })
-    }
-  }, [])
 
   const handleBuscarPregunta = useCallback((e) => {
     e.preventDefault()
-    if (preguntasDisponibles.length === 0) {
+    if (preguntasState.length === 0) {
       return ReactSwal.fire({
         icon: 'error',
         text: 'No hay preguntas disponibles'
       })
     }
     ReactSwal.fire({
-      html: <BuscarPreguntas preguntas={preguntasDisponibles} setForm={setForm} />
+      html: <BuscarPreguntas preguntas={preguntasDisponibles} setForm={setForm} preguntasState={preguntasState} />
     })
-  }, [preguntasDisponibles])
+  }, [preguntasState])
 
   const handleAddPregunta = useCallback(() => {
     if (form.id_pregunta === null) {
@@ -136,33 +207,70 @@ function TablePreguntas ({ preguntas, setPreguntas }) {
       })
     }
     const pregunta = preguntasDisponibles.find(pregunta => pregunta.id === form.id_pregunta)
-    if (pregunta.id_pregCadena) {
-      const preguntaCadena = preguntasDisponibles.find(preguntaF => preguntaF.id === pregunta.id_pregCadena)
-      setPreguntas([...preguntas, {
-        id_pregunta: pregunta.id,
-        pregunta: pregunta.titulo,
-        isCadena: false
-      }, {
-        id_pregunta: preguntaCadena.id,
-        pregunta: preguntaCadena.titulo,
-        isCadena: true
-      }])
-    } else {
-      setPreguntas([...preguntas, {
-        id_pregunta: pregunta.id,
-        pregunta: pregunta.titulo,
-        isCadena: false
-      }])
+    const newPregunta = {
+      id_pregunta: pregunta.id,
+      pregunta: pregunta.titulo,
+      isCadena: false,
+      cadena: []
     }
+    let cadena = []
+    if (pregunta.id_pregCadena) {
+      cadena = agregarPreguntasCadenas(pregunta.id_pregCadena, cadena)
+    }
+    newPregunta.cadena = cadena
+    setPreguntas([...preguntas, newPregunta])
+
     setForm(INITIAL_VALUE)
   }, [form, preguntas])
 
-  const handleEliminarPregunta = useCallback((id_pregunta) => {
+  const agregarPreguntasCadenas = (id_pregunta, cadena) => {
+    const preguntaCadena = preguntasDisponibles.find(preguntaF => preguntaF.id === id_pregunta)
+    if (preguntaCadena) {
+      cadena.push(preguntaCadena.titulo)
+      if (preguntaCadena.id_pregCadena) {
+        cadena = agregarPreguntasCadenas(preguntaCadena.id_pregCadena, cadena)
+      }
+    }
+    return cadena
+  }
+
+  const handleEliminarPregunta = (id_pregunta) => {
+    let newPreguntas = preguntas.filter(pregunta => pregunta.id_pregunta !== id_pregunta)
     const preguntaFind = preguntasDisponibles.find(preguntaF => preguntaF.id === id_pregunta)
-    const preguntaCadena = preguntasDisponibles.find(preguntaF => preguntaF.id === preguntaFind.id_pregCadena)
-    const newPreguntas = preguntas.filter(pregunta => pregunta.id_pregunta !== id_pregunta && pregunta.id_pregunta !== preguntaCadena?.id)
+    if (preguntaFind.id_pregCadena) {
+      newPreguntas = quitarPreguntasCadenas(preguntaFind.id_pregCadena, newPreguntas)
+    }
     setPreguntas(newPreguntas)
-  }, [preguntas])
+  }
+
+  const quitarPreguntasCadenas = (id_pregunta, newPreguntas) => {
+    const preguntaCadena = preguntasDisponibles.find(preguntaF => preguntaF.id === id_pregunta)
+    if (preguntaCadena) {
+      newPreguntas = newPreguntas.filter(pregunta => pregunta.id_pregunta !== preguntaCadena.id)
+      if (preguntaCadena.id_pregCadena) {
+        newPreguntas = quitarPreguntasCadenas(preguntaCadena.id_pregCadena, newPreguntas)
+      }
+    }
+    return newPreguntas
+  }
+
+  const handleSubirPregunta = (id_pregunta) => {
+    const index = preguntas.findIndex(pregunta => pregunta.id_pregunta === id_pregunta)
+    if (index === 0) return
+    const pregunta = preguntas[index]
+    const newPreguntas = preguntas.filter(pregunta => pregunta.id_pregunta !== id_pregunta)
+    newPreguntas.splice(index - 1, 0, pregunta)
+    setPreguntas(newPreguntas)
+  }
+
+  const handleBajarPregunta = (id_pregunta) => {
+    const index = preguntas.findIndex(pregunta => pregunta.id_pregunta === id_pregunta)
+    if (index === preguntas.length - 1) return
+    const pregunta = preguntas[index]
+    const newPreguntas = preguntas.filter(pregunta => pregunta.id_pregunta !== id_pregunta)
+    newPreguntas.splice(index + 1, 0, pregunta)
+    setPreguntas(newPreguntas)
+  }
 
   return (
     <table className='table table-sm table-bordered table-leidy text-center'>
@@ -193,31 +301,47 @@ function TablePreguntas ({ preguntas, setPreguntas }) {
         {preguntas.map((pregunta, index) => (
           <tr key={index}>
             <td>{pregunta.id_pregunta}</td>
-            <td>{pregunta.pregunta} {' '}
-              {!pregunta.isCadena
-                ? (
-                  <span className='badge bg-success'>
-                    <i className='bi bi-question-circle-fill' />
-                  </span>
-                  )
-                : (
+            <td className='d-flex flex-column'>
+              <div>
+                {pregunta.pregunta} {' '}
+                <span className='badge bg-success'>
+                  <i className='bi bi-question-circle-fill' />
+                </span>
+              </div>
+              {pregunta.cadena.map((preguntaCadena, index) => (
+                <div key={index}>
                   <span className='badge bg-warning'>
                     <i className='bi bi-link' />
                   </span>
-                  )}
+                  {' '}{preguntaCadena}
+                </div>
+              ))}
             </td>
             <td>
               <div className='btn-group'>
-                {pregunta.isCadena
-                  ? ''
-                  : (
-                    <button
-                      type='button'
-                      className='btn btn-sm btn-danger' onClick={() => handleEliminarPregunta(pregunta.id_pregunta)}
-                    >
-                      <i className='bi bi-trash-fill' />
-                    </button>
-                    )}
+                <button
+                  type='button'
+                  className='btn btn-sm btn-danger'
+                  onClick={() => handleEliminarPregunta(pregunta.id_pregunta)}
+                >
+                  <i className='bi bi-trash-fill' />
+                </button>
+                {/* Subir Pregunta */}
+                <button
+                  type='button'
+                  className='btn btn-sm btn-secondary'
+                  onClick={() => handleSubirPregunta(pregunta.id_pregunta)}
+                >
+                  <i className='bi bi-arrow-up-circle-fill' />
+                </button>
+                {/* Bajar Pregunta */}
+                <button
+                  type='button'
+                  className='btn btn-sm btn-secondary'
+                  onClick={() => handleBajarPregunta(pregunta.id_pregunta)}
+                >
+                  <i className='bi bi-arrow-down-circle-fill' />
+                </button>
               </div>
             </td>
 
@@ -228,18 +352,18 @@ function TablePreguntas ({ preguntas, setPreguntas }) {
   )
 }
 
-function BuscarPreguntas ({ preguntas: preguntasState, setForm }) {
+function BuscarPreguntas ({ preguntas: preguntasState, setForm, preguntasState: preguntasStateAll }) {
   const [preguntas, setPreguntas] = useState([])
   const [buscador, setBuscador] = useState('')
 
   useEffect(() => {
-    const preguntasPrincipales = preguntasState.filter(pregunta => {
+    const preguntasPrincipales = preguntasStateAll.filter(pregunta => {
       const isCadena = preguntasState.find(preguntaCadena => preguntaCadena.id_pregCadena === pregunta.id)
       if (isCadena) {
         return false
       }
       return pregunta
-    })
+    }).reverse()
     setPreguntas(preguntasPrincipales)
   }, [preguntasState])
 

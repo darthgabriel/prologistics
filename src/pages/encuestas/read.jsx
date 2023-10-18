@@ -4,6 +4,7 @@ import { Swaly } from '@/lib/toastSwal'
 import ConstruirMenu from '@/components/ConstruirMenu'
 
 import protectedRoute from '@/lib/auth/protectedRoute'
+import { useRouter } from 'next/router'
 export const getServerSideProps = protectedRoute()
 
 export const menuEncuestas = [
@@ -50,7 +51,7 @@ export default function encuestasRead () {
         <div className='card-body'>
           {encuestas.length > 0
             ? (
-              <EncuestasTable encuestas={encuestas} />
+              <EncuestasTable encuestas={encuestas} getEncuestas={getEncuestas} />
               )
             : (
               <div className='d-flex justify-content-center'>
@@ -63,7 +64,48 @@ export default function encuestasRead () {
   )
 }
 
-function EncuestasTable ({ encuestas }) {
+function EncuestasTable ({ encuestas, getEncuestas }) {
+  const router = useRouter()
+
+  const handleEliminar = (id) => {
+    Swaly.fire({
+      icon: 'warning',
+      text: '¿Estas seguro de eliminar el cuestionario?',
+      confirmButtonText: 'Eliminar',
+      showCancelButton: true,
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        eliminar(id)
+      }
+    })
+  }
+
+  const eliminar = async (id) => {
+    try {
+      await axios.delete('/api/encuestas/', {
+        params: {
+          id
+        }
+      })
+      Swaly.fire({
+        icon: 'success',
+        text: 'Cuestionario eliminado correctamente'
+      })
+      getEncuestas()
+    } catch (error) {
+      console.log(error)
+      Swaly.fire({
+        icon: 'error',
+        text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al eliminar el cuestionario'
+      })
+    }
+  }
+
+  const handleEditar = (id) => {
+    router.push(`/encuestas/create?id=${id}`)
+  }
+
   return (
     <table className='table table-sm table-bordered table-leidy text-center'>
       <thead>
@@ -80,13 +122,20 @@ function EncuestasTable ({ encuestas }) {
             <td>{encuesta.titulo}</td>
             <td>
               <div className='btn-group'>
-                <button className='btn btn-sm btn-primary'>
+                {/* <button className='btn btn-sm btn-primary'>
                   <i className='bi bi-eye-fill' />
-                </button>
-                <button className='btn btn-sm btn-primary'>
+                </button> */}
+                <button
+                  className='btn btn-sm btn-primary'
+                  onClick={() => handleEditar(encuesta.id)}
+                >
                   <i className='bi bi-pencil-fill' />
                 </button>
-                <button className='btn btn-sm btn-danger'>
+                <button
+                  className='btn btn-sm btn-danger'
+                  type='button'
+                  onClick={() => handleEliminar(encuesta.id)}
+                >
                   <i className='bi bi-trash-fill' />
                 </button>
               </div>
