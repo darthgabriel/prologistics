@@ -3,7 +3,7 @@ import { withSessionRoute } from '../../../lib/auth/withSession'
 const ROUTES = ['/']
 const ID = '1'
 const USERNAME = 'admin'
-const PASSWORD = '123456'
+const PASSWORD = 'prolo159753'
 
 export default withSessionRoute(handler)
 
