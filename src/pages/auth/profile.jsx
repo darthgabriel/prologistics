@@ -24,8 +24,8 @@ const profilePage = ({ user }) => {
   )
 
   return (
-    <div className='container d-flex align-items-center justify-content-center gradient'>
-      <div className='d-flex flex-column'>
+    <div className='card d-flex align-items-center justify-content-center gradient'>
+      <div className='card-body d-flex flex-column'>
         <div className='d-flex flex-column align-items-center'>
           <i className='bi bi-file-person-fill' style={{ fontSize: '10rem' }} />
           <section className='d-flex justify-content-center mt-5 letra fs-1'>{user.fullname}</section>

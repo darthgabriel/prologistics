@@ -85,7 +85,10 @@ export default function Sidebar () {
 
 function ItemMenu ({ name, path, icon }) {
   return (
-    <Link href={path} className='list-group-item py-2'>
+    <Link
+      href={path}
+      className='list-group-item py-2'
+    >
       <i className={'bi ' + icon + ' mx-2 fs-5'} />
       <span>{name}</span>
     </Link>
