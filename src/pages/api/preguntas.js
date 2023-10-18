@@ -93,7 +93,7 @@ async function updatePregunta (req, res) {
     isTexto: data.isTexto,
     isFecha: data.isFecha,
     isSeleccion: data.isSeleccion,
-    id_pregCadena: data?.id_pregCadena || null,
+    id_pregCadena: Number(data?.id_pregCadena) || null,
     condicion: data?.condicion || null,
     obligatoria: data.obligatoria
   }
@@ -111,6 +111,7 @@ async function updatePregunta (req, res) {
     if (baseToUpdate.isSeleccion === true && data.seleccion.length <= 1) throw new Error('Debe tener mas de una seleccion')
     if (baseToUpdate.obligatoria === null || baseToUpdate.obligatoria === '') throw new Error('Hubo un problema con el tipo de pregunta')
     if (baseToUpdate?.id_pregCadena) {
+      baseToUpdate.id_pregCadena = Number(data.id_pregCadena)
       baseToUpdate.condicion = data.seleccion.at(0)
     }
 
