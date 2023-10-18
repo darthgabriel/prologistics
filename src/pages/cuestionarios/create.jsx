@@ -260,6 +260,18 @@ export function PreguntaRender ({ idPregunta, setcuestResp, preguntasState }) {
     )
   }
 
+  if (pregunta.isFecha) {
+    return (
+      <InputControl
+        label={pregunta.titulo}
+        name={pregunta.pregunta}
+        type='date'
+        value={respuesta}
+        onChange={e => setRespuesta(e.target.value)}
+      />
+    )
+  }
+
   return (
     <></>
   )
