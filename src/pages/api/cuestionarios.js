@@ -2,6 +2,9 @@ import { PrismaClient } from '@prisma/client'
 import { getAllClientes } from './clientes'
 import { getAllEncuestas } from './encuestas'
 import { getAllPreguntas } from './preguntas'
+import { Resend } from 'resend'
+
+const resend = new Resend('re_9ybygYM6_MtwbMHWFTmQy3zB6pbLGbcoe')
 
 const prisma = new PrismaClient()
 
@@ -70,6 +73,14 @@ const createRepuestas = async (req, res) => {
         id_pregunta: e.id_pregunta,
         respuesta: e.respuesta
       }))
+    })
+    resend.emails.send({
+      from: 'onboarding@resend.dev',
+      to: ['gabriel.changed@gmail.com', 'Tramitesyenniferibanez1508@gmail.com'],
+      subject: '[Alarma] Cliente ha respondido un Cuestionario',
+      html: `<p>
+                El cliente ${cliente.primerNombre} ${cliente.primerApellido} ha respondido un cuestionario
+            </p>`
     })
     return res.status(200).json({ status: 'OK' })
   } catch (error) {
