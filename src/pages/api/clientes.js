@@ -17,6 +17,8 @@ export const getAllClientes = async () => {
   } catch (error) {
     console.error('🚀 ~ error:', error)
     return []
+  } finally {
+    await prisma.$disconnect()
   }
 }
 

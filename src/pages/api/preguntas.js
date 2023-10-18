@@ -15,6 +15,7 @@ export default function handler (req, res) {
 export const getAllPreguntas = async () => {
   const preguntas = await prisma.prologistics_preguntasBase.findMany()
   const preguntasSeleccion = await prisma.prologistics_preguntasSeleccion.findMany()
+  await prisma.$disconnect()
   return preguntas.map((pregunta) => {
     const seleccion = preguntasSeleccion.filter((item) => item.id_pregunta === pregunta.id)
     const cadena = preguntas.find((item) => item.id === pregunta.id_pregCadena)
@@ -82,6 +83,8 @@ async function createPregunta (req, res) {
     return res.status(200).json({ message: 'Pregunta creada' })
   } catch (error) {
     return res.status(401).json({ error: error.message })
+  } finally {
+    await prisma.$disconnect()
   }
 }
 
@@ -134,6 +137,8 @@ async function updatePregunta (req, res) {
     return res.status(200).json({ message: 'Pregunta actualizada' })
   } catch (error) {
     return res.status(401).json({ error: error.message })
+  } finally {
+    await prisma.$disconnect()
   }
 }
 
@@ -161,5 +166,7 @@ async function deletePregunta (req, res) {
     return res.status(200).json({ message: 'Pregunta eliminada' })
   } catch (error) {
     return res.status(401).json({ error: error.message })
+  } finally {
+    await prisma.$disconnect()
   }
 }

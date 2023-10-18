@@ -16,6 +16,7 @@ export default function handler (req, res) {
 export const getAllEncuestas = async () => {
   const encuestasBases = await prisma.prologistics_encuestasBase.findMany()
   const encuestasData = await prisma.prologistics_encuestasPreguntas.findMany()
+  await prisma.$disconnect()
   const preguntas = await getAllPreguntas()
   const encuestas = encuestasBases.map((encuesta) => {
     const data = encuestasData.filter((item) => item.id_encuesta === encuesta.id)
@@ -43,7 +44,7 @@ export const getEncuestas = async (req, res) => {
   }
 }
 
-export const createEncuesta = async (req, res) => {
+const createEncuesta = async (req, res) => {
   const { body: data } = req
   if (data.titulo === null || data?.titulo === '') return res.status(401).send('El titulo es requerido')
   if (data.preguntas === null || data?.preguntas?.length === 0) return res.status(401).send('Las preguntas son requeridas')
@@ -83,6 +84,8 @@ export const createEncuesta = async (req, res) => {
     } catch (error) {
       console.log('🚀 ~ error:', error)
       return res.status(401).json({ error: error.message })
+    } finally {
+      await prisma.$disconnect()
     }
   }
 
@@ -100,6 +103,8 @@ export const createEncuesta = async (req, res) => {
   } catch (error) {
     console.log('🚀 ~ error:', error)
     return res.status(401).json({ error: error.message })
+  } finally {
+    await prisma.$disconnect()
   }
 }
 
@@ -130,5 +135,7 @@ const deleteEncuesta = async (req, res) => {
   } catch (error) {
     console.log('🚀 ~ error:', error)
     return res.status(401).json({ error: error.message })
+  } finally {
+    await prisma.$disconnect()
   }
 }

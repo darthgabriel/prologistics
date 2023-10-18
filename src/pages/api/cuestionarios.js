@@ -1,14 +1,34 @@
 import { PrismaClient } from '@prisma/client'
 import { getAllClientes } from './clientes'
+import { getAllEncuestas } from './encuestas'
+import { getAllPreguntas } from './preguntas'
 
 const prisma = new PrismaClient()
 
 export default function (req, res) {
   const { method } = req
 
+  if (method === 'GET') return getAllCuestionariosRespondidos(req, res)
   if (method === 'POST') return createRepuestas(req, res)
 
   return res.status(401).json({ error: 'NO PERMITIDO' })
+}
+
+const getAllCuestionariosRespondidos = async (req, res) => {
+  const cuestionarios = await prisma.prologistics_cuestionarios.findMany()
+  await prisma.$disconnect()
+  const encuestas = await getAllEncuestas()
+  const preguntas = await getAllPreguntas()
+  const cuestionariosFormat = cuestionarios.map((cuestionario) => {
+    const encuesta = encuestas.find((encuesta) => encuesta.id === cuestionario.id_encuesta)
+    const pregunta = preguntas.find((pregunta) => pregunta.id === cuestionario.id_pregunta)
+    return {
+      ...cuestionario,
+      tituloCuestionario: encuesta.titulo,
+      pregunta: pregunta.titulo
+    }
+  })
+  return res.status(200).json(cuestionariosFormat.sort((a, b) => a.id_pregunta - b.id_pregunta))
 }
 
 const createRepuestas = async (req, res) => {
@@ -55,6 +75,8 @@ const createRepuestas = async (req, res) => {
   } catch (error) {
     console.error('🚀 ~ error:', error)
     return res.status(401).json({ error: error.message })
+  } finally {
+    await prisma.$disconnect()
   }
 }
 
@@ -65,5 +87,6 @@ export const getAllEncuestasRespondidas = async () => {
       id_cliente: true
     }
   })
+  await prisma.$disconnect()
   return encuestasRespondidas
 }
