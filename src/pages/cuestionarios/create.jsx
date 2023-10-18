@@ -11,11 +11,26 @@ export default function cuestionariosCreate () {
   const [cuestionario, setCuestionario] = useState()
   const [cliente, setCliente] = useState()
   const [cuestResp, setcuestResp] = useState([])
+  const [preguntasState, setPreguntasState] = useState()
 
   useEffect(() => {
     if (!id) return
     fetchCuestionario()
+    fetchPreguntas()
   }, [id])
+
+  const fetchPreguntas = async () => {
+    try {
+      const { data } = await axios.get('/api/preguntas/')
+      setPreguntasState(data)
+    } catch (error) {
+      console.log(error)
+      Swaly.fire({
+        icon: 'error',
+        text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al cargar'
+      })
+    }
+  }
 
   const fetchCuestionario = useCallback(async () => {
     try {
@@ -43,9 +58,10 @@ export default function cuestionariosCreate () {
     // verificar que todos los campos de cuestionario esten llenos
     const respuestasObligatorias = cuestResp.filter(item => item.obligatoria === true && item.respuesta === '')
     if (respuestasObligatorias.length > 0) {
+      const preguntaFind = preguntasState.find(item => item.id === respuestasObligatorias[0].id_pregunta)
       return Swaly.fire({
         icon: 'error',
-        text: 'Todos los campos del cuestionario son obligatorios'
+        text: preguntaFind.titulo + ' es obligatoria'
       })
     }
 
@@ -75,7 +91,7 @@ export default function cuestionariosCreate () {
         ? (
           <div className='d-flex flex-column gap-3'>
             <FormCliente setCliente={setCliente} />
-            <FormCuestionario cuestionario={cuestionario} setcuestResp={setcuestResp} />
+            <FormCuestionario cuestionario={cuestionario} setcuestResp={setcuestResp} preguntasState={preguntasState} />
             <button
               type='button'
               className='btn btn-primary'
@@ -147,26 +163,7 @@ export function FormCliente ({ setCliente }) {
   )
 }
 
-function FormCuestionario ({ cuestionario, setcuestResp }) {
-  const [preguntasState, setPreguntasState] = useState()
-
-  useEffect(() => {
-    fetchPreguntas()
-  }, [])
-
-  const fetchPreguntas = async () => {
-    try {
-      const { data } = await axios.get('/api/preguntas/')
-      setPreguntasState(data)
-    } catch (error) {
-      console.log(error)
-      Swaly.fire({
-        icon: 'error',
-        text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al cargar'
-      })
-    }
-  }
-
+function FormCuestionario ({ cuestionario, setcuestResp, preguntasState }) {
   if (preguntasState === undefined) return null
 
   return (
