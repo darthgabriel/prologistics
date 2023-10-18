@@ -2,7 +2,7 @@ import InputControl from '@/components/formControls/InputControl'
 import { Swaly } from '@/lib/toastSwal'
 import axios from 'axios'
 import { useRouter } from 'next/router'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 export default function cuestionariosCreate () {
   const router = useRouter()
@@ -32,7 +32,7 @@ export default function cuestionariosCreate () {
     }
   }
 
-  const fetchCuestionario = useCallback(async () => {
+  const fetchCuestionario = async () => {
     try {
       const { data } = await axios.get('/api/encuestas/')
       setCuestionario(data.find((item) => item.id === Number(id)))
@@ -43,7 +43,7 @@ export default function cuestionariosCreate () {
         text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al cargar'
       })
     }
-  }, [id])
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -188,11 +188,18 @@ function FormCuestionario ({ cuestionario, setcuestResp, preguntasState }) {
 }
 
 export function PreguntaRender ({ idPregunta, setcuestResp, preguntasState }) {
-  const pregunta = preguntasState.find(item => item.id === idPregunta)
   const [pregCadena, setPregCadena] = useState(false)
   const [respuesta, setRespuesta] = useState()
+  const [pregunta, setPregunta] = useState()
 
   useEffect(() => {
+    if (!idPregunta) return
+    const preguntaFind = preguntasState.find(item => item.id === idPregunta)
+    setPregunta(preguntaFind)
+  }, [idPregunta])
+
+  useEffect(() => {
+    if (!pregunta) return
     if (pregunta.id_pregCadena) {
       setPregCadena(true)
     }
@@ -224,6 +231,8 @@ export function PreguntaRender ({ idPregunta, setcuestResp, preguntasState }) {
       })
     }
   }, [respuesta])
+
+  if (!pregunta) return <></>
 
   if (pregunta.isTexto) {
     return (

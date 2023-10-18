@@ -74,14 +74,22 @@ const createRepuestas = async (req, res) => {
         respuesta: e.respuesta
       }))
     })
-    resend.emails.send({
-      from: 'onboarding@resend.dev',
-      to: ['gabriel.changed@gmail.com', 'Tramitesyenniferibanez1508@gmail.com'],
-      subject: '[Alarma] Cliente ha respondido un Cuestionario',
+
+    // enviar correo de notificacion
+    await resend.emails.send({
+      from: 'notificacion@prologistics.vercel.app',
+      to: 'tramitesyenniferibanez1508@gmail.com',
+      cc: 'gabriel.changed@gmail.com',
+      subject: '[NOTIFICACION] Cliente ha respondido un Cuestionario',
       html: `<p>
                 El cliente ${cliente.primerNombre} ${cliente.primerApellido} ha respondido un cuestionario
             </p>`
+    }).then(() => {
+      console.log('email sent')
+    }).catch((err) => {
+      console.error('🚀 ~ error:', err)
     })
+
     return res.status(200).json({ status: 'OK' })
   } catch (error) {
     console.error('🚀 ~ error:', error)
