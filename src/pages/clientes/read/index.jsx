@@ -11,8 +11,8 @@ const fetchClientes = async () => {
     return data
   } catch (error) {
     console.log(error)
-    return []
   }
+  return []
 }
 
 export default function clientesRead () {
@@ -32,7 +32,8 @@ export default function clientesRead () {
   )
 }
 
-function ClientesTables ({ clientes }) {
+function ClientesTables ({ clientes: clientesState }) {
+  const [clientes, setClientes] = useState(clientesState)
   const router = useRouter()
   return (
     <table className='table table-sm table-bordered table-leidy text-center'>
@@ -45,6 +46,7 @@ function ClientesTables ({ clientes }) {
           <th>Email</th>
           <th />
         </tr>
+        <BuscadorClientesForm setClientes={setClientes} clientesState={clientesState} />
       </thead>
       <tbody>
         {clientes.map((cliente) => (
@@ -69,5 +71,33 @@ function ClientesTables ({ clientes }) {
         ))}
       </tbody>
     </table>
+  )
+}
+
+function BuscadorClientesForm ({ setClientes, clientesState }) {
+  const [buscador, setBuscador] = useState('')
+  const handleBuscador = (e) => {
+    setBuscador(e.target.value)
+    const clientes = clientesState.filter((cliente) => {
+      const { cedula, primerNombre, segundoNombre, primerApellido, segundoApellido } = cliente
+      const busqueda = `${cedula} ${primerNombre} ${segundoNombre} ${primerApellido} ${segundoApellido}`
+      return busqueda.toLowerCase().includes(e.target.value.toLowerCase())
+    })
+    setClientes(clientes)
+  }
+  return (
+    <tr>
+      <td colSpan='12'>
+        <div className='input-group'>
+          <input
+            type='text'
+            className='form-control form-control-sm'
+            placeholder='Buscar cliente'
+            value={buscador}
+            onChange={handleBuscador}
+          />
+        </div>
+      </td>
+    </tr>
   )
 }
