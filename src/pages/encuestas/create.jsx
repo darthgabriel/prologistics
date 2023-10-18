@@ -148,7 +148,7 @@ function FormCreateEncuestas ({ initialCuestionario }) {
   return (
     <form onSubmit={handleSubmit} autoComplete='off' className='d-flex flex-column gap-2'>
       <div className='row'>
-        <div className='col-sm-2'>
+        <div className='col-sm-6 col-2'>
           <InputControl
             label='Titulo para el Cuestionario'
             name='titulo'
