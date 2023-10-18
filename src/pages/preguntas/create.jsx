@@ -44,7 +44,7 @@ function FormCreatePregunta ({ initialValues = {} }) {
     isTexto: true,
     isFecha: false,
     isSeleccion: false,
-    obligatoria: false,
+    obligatoria: true,
     seleccion: []
   }
   const [form, setForm] = useState(INITIAL_FORM)
@@ -56,10 +56,10 @@ function FormCreatePregunta ({ initialValues = {} }) {
     const { titulo, isTexto, isFecha, isSeleccion, obligatoria, seleccion } = initialValues
     setForm({
       titulo,
-      isTexto: isTexto === '1',
-      isFecha: isFecha === '1',
-      isSeleccion: isSeleccion === '1',
-      obligatoria: obligatoria === '1',
+      isTexto: isTexto === 'true',
+      isFecha: isFecha === 'true',
+      isSeleccion: isSeleccion === 'true',
+      obligatoria: obligatoria === 'true',
       seleccion,
       id_pregCadena: initialValues?.id_pregCadena || null,
       titulo_pregCadena: initialValues?.titulo_pregCadena || null
@@ -109,6 +109,7 @@ function FormCreatePregunta ({ initialValues = {} }) {
         title: 'Pregunta Creada!'
       })
       setForm(INITIAL_FORM)
+      setEncadenarPreg(false)
     } catch (error) {
       console.log(error)
       Swaly.fire({
@@ -244,10 +245,18 @@ function EncadenarPregunta ({ setForm, form }) {
       }
       const { data } = await axios.get('/api/preguntas')
       const preguntasDisp = data.filter((pregunta) => pregunta.titulo !== String(form.titulo).toLowerCase().trim())
+      const pNoEncadenadas = preguntasDisp.filter((p) => p.id_pregCadena === null)
+      // preguntas q no son cadenas
+      const preguntasLibres = pNoEncadenadas.filter((p) => {
+        const verfNoUsada = preguntasDisp.find((p2) => p2.id_pregCadena === p.id)
+        if (verfNoUsada) return false
+        return true
+      })
+
       const { value: pregunta } = await Swaly.fire({
         title: 'Seleccione la pregunta a encadenar',
         input: 'select',
-        inputOptions: preguntasDisp.reduce((acc, pregunta) => {
+        inputOptions: preguntasLibres.reduce((acc, pregunta) => {
           acc[pregunta.id] = pregunta.titulo
           return acc
         }, {})
