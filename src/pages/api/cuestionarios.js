@@ -77,7 +77,7 @@ const createRepuestas = async (req, res) => {
 
     // enviar correo de notificacion
     await resend.emails.send({
-      from: 'notificacion@prologistics.vercel.app',
+      from: 'onboarding@resend.dev',
       to: 'tramitesyenniferibanez1508@gmail.com',
       cc: 'gabriel.changed@gmail.com',
       subject: '[NOTIFICACION] Cliente ha respondido un Cuestionario',

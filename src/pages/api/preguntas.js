@@ -117,6 +117,10 @@ async function updatePregunta (req, res) {
       baseToUpdate.id_pregCadena = Number(data.id_pregCadena)
       baseToUpdate.condicion = data.seleccion.at(0)
     }
+    /* limpio simpre la seleccion */
+    await prisma.prologistics_preguntasSeleccion.deleteMany({
+      where: { id_pregunta: data.id }
+    })
 
     await prisma.prologistics_preguntasBase.update({
       where: { id: data.id },
@@ -124,9 +128,6 @@ async function updatePregunta (req, res) {
     })
 
     if (baseToUpdate.isSeleccion === true) {
-      await prisma.prologistics_preguntasSeleccion.deleteMany({
-        where: { id_pregunta: data.id }
-      })
       await prisma.prologistics_preguntasSeleccion.createMany({
         data: data.seleccion.map((item) => ({
           id_pregunta: data.id,

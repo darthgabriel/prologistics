@@ -60,7 +60,7 @@ function FormCreatePregunta ({ initialValues = {} }) {
       isFecha: isFecha === 'true',
       isSeleccion: isSeleccion === 'true',
       obligatoria: obligatoria === 'true',
-      seleccion,
+      seleccion: seleccion || [],
       id_pregCadena: initialValues?.id_pregCadena || null,
       titulo_pregCadena: initialValues?.titulo_pregCadena || null
     })
@@ -208,7 +208,7 @@ function SeleccionesForm ({ form, setForm }) {
       <div className='col-sm-6'>
         <label className='form-label'>Lista de Opciones</label>
         <ul className='list-group'>
-          {form.seleccion.map((item, index) => (
+          {form.seleccion?.map((item, index) => (
             <li className='list-group-item d-flex justify-content-between align-items-center' key={index}>
               {item}
               {index === 0 && form?.id_pregCadena ? (<span className='badge bg-primary rounded-pill'>Condicion para el Encadenamiento</span>) : null}
