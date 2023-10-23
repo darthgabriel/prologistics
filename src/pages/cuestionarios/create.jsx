@@ -11,6 +11,7 @@ export default function cuestionariosCreate () {
   const [cuestionario, setCuestionario] = useState()
   const [cliente, setCliente] = useState()
   const [cuestResp, setcuestResp] = useState([])
+  console.log('🚀 ~ cuestResp:', cuestResp)
   const [preguntasState, setPreguntasState] = useState()
 
   useEffect(() => {
@@ -229,6 +230,17 @@ export function PreguntaRender ({ idPregunta, setcuestResp, preguntasState }) {
         }
         return resp
       })
+      // si la respuesta es no es el de la condicion eliminar del array
+      if (pregCadena && respuesta !== pregunta.condicion) {
+        setcuestResp(prev => {
+          const resp = [...prev]
+          const index = resp.findIndex(item => item.id_pregunta === pregunta.id_pregCadena)
+          if (index !== -1) {
+            resp.splice(index, 1)
+          }
+          return resp
+        })
+      }
     }
   }, [respuesta])
 
