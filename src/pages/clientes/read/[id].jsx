@@ -70,30 +70,32 @@ export default function clientesRead () {
 
 function ClienteInfo ({ cliente }) {
   return (
-    <table className='table table-sm table-bordered table-leidy text-center'>
-      <thead>
-        <tr>
-          <th>DOCUMENTO</th>
-          <th>Primer Nombre</th>
-          <th>Segundo Nombre</th>
-          <th>Primer Apellido</th>
-          <th>Segundo Apellido</th>
-          <th>Telefono</th>
-          <th>E-mail</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>{cliente.cedula}</td>
-          <td>{cliente.primerNombre}</td>
-          <td>{cliente.segundoNombre}</td>
-          <td>{cliente.primerApellido}</td>
-          <td>{cliente.segundoApellido}</td>
-          <td>{cliente.telefono}</td>
-          <td>{cliente.email}</td>
-        </tr>
-      </tbody>
-    </table>
+    <div className='table-responsive'>
+      <table className='table table-sm table-bordered table-leidy text-center'>
+        <thead>
+          <tr>
+            <th>DOCUMENTO</th>
+            <th>Primer Nombre</th>
+            <th>Segundo Nombre</th>
+            <th>Primer Apellido</th>
+            <th>Segundo Apellido</th>
+            <th>Telefono</th>
+            <th>E-mail</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{cliente.cedula}</td>
+            <td>{cliente.primerNombre}</td>
+            <td>{cliente.segundoNombre}</td>
+            <td>{cliente.primerApellido}</td>
+            <td>{cliente.segundoApellido}</td>
+            <td>{cliente.telefono}</td>
+            <td>{cliente.email}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   )
 }
 
@@ -118,39 +120,41 @@ function CuestionariosRespondidos ({ idCliente, cuestionariosState, setCuestiona
   }, [idCliente, cuestionariosState])
 
   const handleVer = (id_encuesta) => {
-    const cuestionario = cuestionariosState.filter((cuestionario) => cuestionario.id_encuesta === id_encuesta)
+    const cuestionario = cuestionariosState.filter((cuestionario) => cuestionario.id_encuesta === id_encuesta && cuestionario.id_cliente === idCliente)
     setCuestionarioSelected(cuestionario)
   }
 
   return (
-    <table className='table table-sm table-bordered table-leidy text-center mt-2'>
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Cuestionario</th>
-          <th />
-        </tr>
-      </thead>
-      <tbody>
-        {cuestionarios.map((cuestionario) => (
-          <tr key={cuestionario.id}>
-            <td>{moment(cuestionario.createdAt).format('DD/MM/YYYY')}</td>
-            <td>{cuestionario.tituloCuestionario}</td>
-            <td>
-              <div className='btn-group'>
-                <button
-                  type='button'
-                  className='btn btn-sm btn-outline-primary'
-                  onClick={() => handleVer(cuestionario.id_encuesta)}
-                >
-                  <i className='bi bi-eye-fill' />
-                </button>
-              </div>
-            </td>
+    <div className='table-responsive'>
+      <table className='table table-sm table-bordered table-leidy text-center mt-2'>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Cuestionario</th>
+            <th />
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {cuestionarios.map((cuestionario) => (
+            <tr key={cuestionario.id}>
+              <td>{moment(cuestionario.createdAt).format('DD/MM/YYYY')}</td>
+              <td>{cuestionario.tituloCuestionario}</td>
+              <td>
+                <div className='btn-group'>
+                  <button
+                    type='button'
+                    className='btn btn-sm btn-outline-primary'
+                    onClick={() => handleVer(cuestionario.id_encuesta)}
+                  >
+                    <i className='bi bi-eye-fill' />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }
 
