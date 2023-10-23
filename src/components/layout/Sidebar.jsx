@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import useUser from '@/hooks/useUser'
-import axios from 'axios'
+import { cuestionariosStore } from '@/lib/store/cuestionarios'
 
 const GUEST_MENU = [
   {
@@ -37,25 +37,14 @@ const ADMIN_MENU = [
 export default function Sidebar () {
   const [isAuth, setIsAuth] = useState(false)
   const { user } = useUser()
-  const [encuestas, setEncuestas] = useState([])
+  const encuestas = cuestionariosStore((state) => state.cuestionarios)
 
   useEffect(() => {
     setIsAuth(false)
-    fetchCuestionarios()
     if (!user) return
     if (!Object.keys(user).length) return
     setIsAuth(true)
   }, [user])
-
-  const fetchCuestionarios = useCallback(async () => {
-    try {
-      const { data } = await axios.get('/api/encuestas')
-      if (data.length === 0) throw new Error('No hay cuestionarios creados')
-      setEncuestas(data)
-    } catch (error) {
-      console.log(error)
-    }
-  }, [])
 
   return (
     <div className='d-print-none'>

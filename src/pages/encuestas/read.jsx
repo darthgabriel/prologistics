@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { Swaly } from '@/lib/toastSwal'
 import ConstruirMenu from '@/components/ConstruirMenu'
 
 import protectedRoute from '@/lib/auth/protectedRoute'
 import { useRouter } from 'next/router'
+import { cuestionariosStore } from '@/lib/store/cuestionarios'
 export const getServerSideProps = protectedRoute()
 
 export const menuEncuestas = [
@@ -24,25 +24,7 @@ const submenu = [
 ]
 
 export default function encuestasRead () {
-  const [encuestas, setEncuestas] = useState([])
-
-  useEffect(() => {
-    getEncuestas()
-  }, [])
-
-  const getEncuestas = async () => {
-    try {
-      const { data } = await axios.get('/api/encuestas')
-      if (data.length === 0) throw new Error('No hay cuestionarios creados')
-      setEncuestas(data)
-    } catch (error) {
-      console.log(error)
-      Swaly.fire({
-        icon: 'error',
-        text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al cargar la pregunta'
-      })
-    }
-  }
+  const encuestas = cuestionariosStore((state) => state.cuestionarios)
 
   return (
     <>
@@ -51,7 +33,7 @@ export default function encuestasRead () {
         <div className='card-body'>
           {encuestas.length > 0
             ? (
-              <EncuestasTable encuestas={encuestas} getEncuestas={getEncuestas} />
+              <EncuestasTable encuestas={encuestas} />
               )
             : (
               <div className='d-flex justify-content-center'>
@@ -64,7 +46,8 @@ export default function encuestasRead () {
   )
 }
 
-function EncuestasTable ({ encuestas, getEncuestas }) {
+function EncuestasTable ({ encuestas }) {
+  const reloadService = cuestionariosStore((state) => state.reloadService)
   const router = useRouter()
 
   const handleEliminar = (id) => {
@@ -92,7 +75,11 @@ function EncuestasTable ({ encuestas, getEncuestas }) {
         icon: 'success',
         text: 'Cuestionario eliminado correctamente'
       })
-      getEncuestas()
+        .then((r) => {
+          if (r.isDismissed || r.isConfirmed) {
+            reloadService()
+          }
+        })
     } catch (error) {
       console.log(error)
       Swaly.fire({

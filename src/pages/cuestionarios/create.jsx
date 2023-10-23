@@ -1,4 +1,6 @@
 import InputControl from '@/components/formControls/InputControl'
+import { cuestionariosStore } from '@/lib/store/cuestionarios'
+import { preguntasStore } from '@/lib/store/preguntas'
 import { Swaly } from '@/lib/toastSwal'
 import axios from 'axios'
 import { useRouter } from 'next/router'
@@ -8,43 +10,18 @@ export default function cuestionariosCreate () {
   const router = useRouter()
   const { id } = router.query
 
+  const cuestionarios = cuestionariosStore((state) => state.cuestionarios)
+  const preguntas = preguntasStore((state) => state.preguntas)
   const [cuestionario, setCuestionario] = useState()
   const [cliente, setCliente] = useState()
   const [cuestResp, setcuestResp] = useState([])
-  console.log('🚀 ~ cuestResp:', cuestResp)
   const [preguntasState, setPreguntasState] = useState()
 
   useEffect(() => {
     if (!id) return
-    fetchCuestionario()
-    fetchPreguntas()
+    setCuestionario(cuestionarios.find((item) => item.id === Number(id)))
+    setPreguntasState(preguntas)
   }, [id])
-
-  const fetchPreguntas = async () => {
-    try {
-      const { data } = await axios.get('/api/preguntas/')
-      setPreguntasState(data)
-    } catch (error) {
-      console.log(error)
-      Swaly.fire({
-        icon: 'error',
-        text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al cargar'
-      })
-    }
-  }
-
-  const fetchCuestionario = async () => {
-    try {
-      const { data } = await axios.get('/api/encuestas/')
-      setCuestionario(data.find((item) => item.id === Number(id)))
-    } catch (error) {
-      console.log(error)
-      Swaly.fire({
-        icon: 'error',
-        text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al cargar'
-      })
-    }
-  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()

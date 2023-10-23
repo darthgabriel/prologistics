@@ -7,6 +7,7 @@ import InputControl from '@/components/formControls/InputControl'
 import { ReactSwal, Swaly } from '@/lib/toastSwal'
 import axios from 'axios'
 import { useRouter } from 'next/router'
+import { cuestionariosStore } from '@/lib/store/cuestionarios'
 export const getServerSideProps = protectedRoute()
 
 export default function encuestasCreate () {
@@ -59,6 +60,8 @@ function FormCreateEncuestas ({ initialCuestionario }) {
   const [preguntasDisponibles, setPreguntasDisponibles] = useState([])
   const [preguntasState, setPreguntasState] = useState([])
   const router = useRouter()
+  const reloadService = cuestionariosStore((state) => state.reloadService)
+
   useEffect(() => {
     fetchPreguntas()
   }, [])
@@ -131,11 +134,12 @@ function FormCreateEncuestas ({ initialCuestionario }) {
         icon: 'success',
         text: initialCuestionario ? 'Cuestionario actualizado' : 'Cuestionario creado'
       })
-      if (initialCuestionario) {
-        return router.push('/encuestas/read')
-      }
-      setForm(INITIAL_FORM)
-      setPreguntas([])
+        .then((r) => {
+          if (r.isDismissed || r.isConfirmed) {
+            reloadService()
+            router.push('/encuestas/read')
+          }
+        })
     } catch (error) {
       console.log(error)
       Swaly.fire({

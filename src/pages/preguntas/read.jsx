@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import protectedRoute from '@/lib/auth/protectedRoute'
 import axios from 'axios'
@@ -6,6 +6,7 @@ import { ReactSwal, Swaly } from '@/lib/toastSwal'
 import ConstruirMenu from '@/components/ConstruirMenu'
 import { useRouter } from 'next/router'
 import InputControl from '@/components/formControls/InputControl'
+import { preguntasStore } from '@/lib/store/preguntas'
 export const getServerSideProps = protectedRoute()
 
 export const menuPreguntas = [
@@ -25,25 +26,7 @@ const submenu = [
 ]
 
 export default function preguntasRead () {
-  const [preguntas, setPreguntas] = useState([])
-
-  useEffect(() => {
-    getPreguntas()
-  }, [])
-
-  const getPreguntas = async () => {
-    try {
-      const { data } = await axios.get('/api/preguntas')
-      if (data.length === 0) throw new Error('No hay preguntas')
-      setPreguntas(data)
-    } catch (error) {
-      console.log(error)
-      Swaly.fire({
-        icon: 'error',
-        text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al cargar la pregunta'
-      })
-    }
-  }
+  const preguntas = preguntasStore((state) => state.preguntas)
 
   return (
     <>
