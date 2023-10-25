@@ -4,6 +4,7 @@ import axios from 'axios'
 import protectedRoute from '@/lib/auth/protectedRoute'
 import { useRouter } from 'next/router'
 import moment from 'moment/moment'
+import { preguntasStore } from '@/lib/store/preguntas'
 export const getServerSideProps = protectedRoute()
 
 const getClientes = async () => {
@@ -100,7 +101,6 @@ function ClienteInfo ({ cliente }) {
 }
 
 function CuestionariosRespondidos ({ idCliente, cuestionariosState, setCuestionarioSelected }) {
-  console.log('🚀 ~ cuestionariosState:', cuestionariosState)
   const [cuestionarios, setCuestionarios] = useState([])
 
   useEffect(() => {
@@ -190,12 +190,7 @@ function CuestionarioInfo ({ cuestionario, setCuestionarioSelected }) {
           </tr>
         </thead>
         <tbody>
-          {cuestionario.map((cuestionario) => (
-            <tr key={cuestionario.id}>
-              <td>{cuestionario.pregunta}</td>
-              <td>{cuestionario.respuesta}</td>
-            </tr>
-          ))}
+          {cuestionario.map((cuestionario) => <CuestionarioItem key={cuestionario.id} cuestionario={cuestionario} />)}
         </tbody>
       </table>
 
@@ -210,5 +205,26 @@ function CuestionarioInfo ({ cuestionario, setCuestionarioSelected }) {
         </button>
       </div>
     </>
+  )
+}
+
+function CuestionarioItem ({ cuestionario }) {
+  const preguntas = preguntasStore((state) => state.preguntas)
+  const [formatRrespuesta, setFormatRespuesta] = useState('')
+
+  useEffect(() => {
+    if (!cuestionario) return
+    const pregunta = preguntas.find((pregunta) => pregunta.id === cuestionario.id_pregunta)
+    if (pregunta.isFecha) {
+      return setFormatRespuesta(moment(cuestionario.respuesta).format('MM/DD/YYYY'))
+    }
+    return setFormatRespuesta(cuestionario.respuesta)
+  }, [cuestionario])
+
+  return (
+    <tr>
+      <td>{cuestionario.pregunta}</td>
+      <td>{formatRrespuesta}</td>
+    </tr>
   )
 }
