@@ -29,3 +29,13 @@ export const fetchPreguntas = async () => {
 
   return []
 }
+
+export const fetchClientes = async () => {
+  try {
+    const { data } = await axios.get('/api/clientes/')
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+  return []
+}

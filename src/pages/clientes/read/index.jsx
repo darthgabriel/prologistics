@@ -1,26 +1,14 @@
-import React, { useEffect, useState } from 'react'
-import axios from 'axios'
+import React, { useState } from 'react'
 
 import protectedRoute from '@/lib/auth/protectedRoute'
 import { useRouter } from 'next/router'
+import { clientesStore } from '@/lib/store/clientes'
 export const getServerSideProps = protectedRoute()
 
-const fetchClientes = async () => {
-  try {
-    const { data } = await axios.get('/api/clientes/')
-    return data
-  } catch (error) {
-    console.log(error)
-  }
-  return []
-}
-
 export default function clientesRead () {
-  const [clientes, setClientes] = useState([])
-  useEffect(() => {
-    fetchClientes()
-      .then((data) => setClientes(data))
-  }, [])
+  const clientes = clientesStore((state) => state.clientes)
+  console.log('🚀 ~ clientes:', clientes)
+
   return (
     <>
       {clientes.length > 0

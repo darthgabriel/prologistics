@@ -4,7 +4,8 @@ import { preguntasStore } from '@/lib/store/preguntas'
 import { Swaly } from '@/lib/toastSwal'
 import axios from 'axios'
 import { useRouter } from 'next/router'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
+import emailjs from '@emailjs/browser'
 
 export default function cuestionariosCreate () {
   const router = useRouter()
@@ -19,9 +20,12 @@ export default function cuestionariosCreate () {
 
   useEffect(() => {
     if (!id) return
+    if (cuestionarios.length === 0) return
+    if (preguntas.length === 0) return
+    setcuestResp([])
     setCuestionario(cuestionarios.find((item) => item.id === Number(id)))
     setPreguntasState(preguntas)
-  }, [id])
+  }, [id, cuestionarios, preguntas])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -49,11 +53,21 @@ export default function cuestionariosCreate () {
         icon: 'success',
         text: 'Cuestionario guardado, nos contactaremos con ud pronto'
       })
-        .then((r) => {
+        .then(async (r) => {
           if (r.isDismissed || r.isConfirmed) {
             router.push('/')
           }
         })
+
+      await emailjs.send(
+        'service_t35i9ew',
+        'template_1zfgevj',
+        {
+          primerNombre: cliente.primerNombre,
+          primerApellido: cliente.primerApellido
+        },
+        'Llr5MWaAAKTsVNvc5'
+      )
     } catch (error) {
       console.log(error)
       Swaly.fire({
@@ -225,13 +239,16 @@ export function PreguntaRender ({ idPregunta, setcuestResp, preguntasState }) {
 
   if (pregunta.isTexto) {
     return (
-      <InputControl
-        label={pregunta.titulo}
-        name={pregunta.pregunta}
-        type='text'
-        value={respuesta}
-        onChange={e => setRespuesta(e.target.value)}
-      />
+      <>
+        <label className='form-label'>{pregunta.titulo}</label>
+        <input
+          type='text'
+          className='form-control form-control-sm'
+          name={pregunta.pregunta}
+          value={respuesta || ''}
+          onChange={e => setRespuesta(e.target.value)}
+        />
+      </>
     )
   }
 
@@ -242,10 +259,10 @@ export function PreguntaRender ({ idPregunta, setcuestResp, preguntasState }) {
         <select
           className='form-select'
           name={pregunta.pregunta}
-          value={respuesta}
+          value={respuesta || ''}
           onChange={e => setRespuesta(e.target.value)}
         >
-          <option value='' disabled selected>Seleccione</option>
+          <option value='' disabled>Seleccione</option>
           {pregunta.seleccion?.map((item, index) => (
             <option key={index}>{item.valor}</option>
           ))}
@@ -257,13 +274,16 @@ export function PreguntaRender ({ idPregunta, setcuestResp, preguntasState }) {
 
   if (pregunta.isFecha) {
     return (
-      <InputControl
-        label={pregunta.titulo}
-        name={pregunta.pregunta}
-        type='date'
-        value={respuesta}
-        onChange={e => setRespuesta(e.target.value)}
-      />
+      <>
+        <label className='form-label'>{pregunta.titulo}</label>
+        <input
+          type='date'
+          className='form-control form-control-sm'
+          name={pregunta.pregunta}
+          value={respuesta || ''}
+          onChange={e => setRespuesta(e.target.value)}
+        />
+      </>
     )
   }
 
