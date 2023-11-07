@@ -25,13 +25,13 @@ export default function clientesRead () {
   const { clientes } = clientesStore((state) => state)
   const [cuestionarioSelected, setCuestionarioSelected] = useState()
   const [cuestionariosState, setCuestionariosState] = useState([])
-  const { preguntasFetch } = preguntasStore((state) => state)
+  const { fetchPreguntas } = preguntasStore((state) => state)
 
   if (!id) return null
 
   useEffect(() => {
-    preguntasFetch()
-  }, [preguntasFetch])
+    fetchPreguntas()
+  }, [fetchPreguntas])
 
   useEffect(() => {
     if (!clientes.length === 0) return
