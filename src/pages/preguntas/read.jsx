@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import protectedRoute from '@/lib/auth/protectedRoute'
 import axios from 'axios'
@@ -26,7 +26,11 @@ const submenu = [
 ]
 
 export default function preguntasRead () {
-  const preguntas = preguntasStore((state) => state.preguntas)
+  const { preguntas, fetchPreguntas } = preguntasStore((state) => state)
+
+  useEffect(() => {
+    fetchPreguntas()
+  }, [fetchPreguntas])
 
   return (
     <>

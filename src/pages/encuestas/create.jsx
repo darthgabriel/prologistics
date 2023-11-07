@@ -14,6 +14,11 @@ export default function encuestasCreate () {
   const router = useRouter()
   const { id } = router.query
   const [initialCuestionario, setInitialCuestionario] = useState()
+  const { fetchCuestionarios } = cuestionariosStore((state) => state)
+
+  useEffect(() => {
+    fetchCuestionarios()
+  }, [fetchCuestionarios])
 
   useEffect(() => {
     if (!id) return

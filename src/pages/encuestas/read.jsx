@@ -5,6 +5,7 @@ import ConstruirMenu from '@/components/ConstruirMenu'
 import protectedRoute from '@/lib/auth/protectedRoute'
 import { useRouter } from 'next/router'
 import { cuestionariosStore } from '@/lib/store/cuestionarios'
+import { useEffect } from 'react'
 export const getServerSideProps = protectedRoute()
 
 export const menuEncuestas = [
@@ -25,6 +26,11 @@ const submenu = [
 
 export default function encuestasRead () {
   const encuestas = cuestionariosStore((state) => state.cuestionarios)
+  const { fetchCuestionarios } = cuestionariosStore((state) => state)
+
+  useEffect(() => {
+    fetchCuestionarios()
+  }, [fetchCuestionarios])
 
   return (
     <>

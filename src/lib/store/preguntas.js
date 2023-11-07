@@ -2,7 +2,9 @@ import { create } from 'zustand'
 import { fetchPreguntas } from '../services'
 
 export const preguntasStore = create((set) => ({
-  preguntas: []
+  preguntas: [],
+  fetchPreguntas: async () => {
+    const data = await fetchPreguntas()
+    set({ preguntas: data })
+  }
 }))
-
-fetchPreguntas().then((data) => { preguntasStore.setState({ preguntas: data }) })

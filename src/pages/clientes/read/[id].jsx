@@ -5,17 +5,8 @@ import protectedRoute from '@/lib/auth/protectedRoute'
 import { useRouter } from 'next/router'
 import moment from 'moment/moment'
 import { preguntasStore } from '@/lib/store/preguntas'
+import { clientesStore } from '@/lib/store/clientes'
 export const getServerSideProps = protectedRoute()
-
-const getClientes = async () => {
-  try {
-    const { data } = await axios.get('/api/clientes/')
-    return data
-  } catch (error) {
-    console.log(error)
-    return []
-  }
-}
 
 const getCuestionarios = async () => {
   try {
@@ -31,17 +22,23 @@ export default function clientesRead () {
   const router = useRouter()
   const { id } = router.query
   const [cliente, setCliente] = useState()
+  const { clientes } = clientesStore((state) => state)
   const [cuestionarioSelected, setCuestionarioSelected] = useState()
   const [cuestionariosState, setCuestionariosState] = useState([])
+  const { preguntasFetch } = preguntasStore((state) => state)
+
+  if (!id) return null
 
   useEffect(() => {
-    if (!id) return
-    getClientes()
-      .then((data) => {
-        const clienteFind = data.find((cliente) => cliente.id === Number(router.query.id))
-        setCliente(clienteFind)
-      })
-  }, [id])
+    preguntasFetch()
+  }, [preguntasFetch])
+
+  useEffect(() => {
+    if (!clientes.length === 0) return
+    const clienteFind = clientes.find((cliente) => cliente.id === Number(router.query.id))
+    if (!clienteFind) return router.push('/clientes/read')
+    setCliente(clienteFind)
+  }, [clientes])
 
   useEffect(() => {
     if (!cliente) return

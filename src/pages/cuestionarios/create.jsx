@@ -11,12 +11,16 @@ export default function cuestionariosCreate () {
   const router = useRouter()
   const { id } = router.query
 
-  const cuestionarios = cuestionariosStore((state) => state.cuestionarios)
+  const { cuestionarios, fetchCuestionarios } = cuestionariosStore((state) => state)
   const preguntas = preguntasStore((state) => state.preguntas)
   const [cuestionario, setCuestionario] = useState()
   const [cliente, setCliente] = useState()
   const [cuestResp, setcuestResp] = useState([])
   const [preguntasState, setPreguntasState] = useState()
+
+  useEffect(() => {
+    fetchCuestionarios()
+  }, [fetchCuestionarios])
 
   useEffect(() => {
     if (!id) return

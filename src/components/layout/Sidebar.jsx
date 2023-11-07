@@ -37,7 +37,11 @@ const ADMIN_MENU = [
 export default function Sidebar () {
   const [isAuth, setIsAuth] = useState(false)
   const { user } = useUser()
-  const encuestas = cuestionariosStore((state) => state.cuestionarios)
+  const { cuestionarios: encuestas, fetchCuestionarios } = cuestionariosStore((state) => state)
+
+  useEffect(() => {
+    fetchCuestionarios()
+  }, [fetchCuestionarios])
 
   useEffect(() => {
     setIsAuth(false)
