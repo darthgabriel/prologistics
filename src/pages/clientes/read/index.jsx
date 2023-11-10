@@ -1,16 +1,12 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 
 import protectedRoute from '@/lib/auth/protectedRoute'
 import { useRouter } from 'next/router'
-import { clientesStore } from '@/lib/store/clientes'
+import clientesState from '@/lib/store/clientes'
 export const getServerSideProps = protectedRoute()
 
 export default function clientesRead () {
-  const { clientes, fetchClientes } = clientesStore((state) => state)
-
-  useEffect(() => {
-    fetchClientes()
-  }, [fetchClientes])
+  const { clientes } = clientesState()
 
   return (
     <>

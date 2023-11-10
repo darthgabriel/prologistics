@@ -1,35 +1,30 @@
 import InputControl from '@/components/formControls/InputControl'
-import { cuestionariosStore } from '@/lib/store/cuestionarios'
-import { preguntasStore } from '@/lib/store/preguntas'
 import { Swaly } from '@/lib/toastSwal'
 import axios from 'axios'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import emailjs from '@emailjs/browser'
+import cuestionariosState from '@/lib/store/cuestionarios'
+import preguntasStateGlobal from '@/lib/store/preguntas'
 
 export default function cuestionariosCreate () {
   const router = useRouter()
   const { id } = router.query
 
-  const { cuestionarios, fetchCuestionarios } = cuestionariosStore((state) => state)
-  const preguntas = preguntasStore((state) => state.preguntas)
+  const { getCuestionario } = cuestionariosState()
+  const { preguntas } = preguntasStateGlobal()
   const [cuestionario, setCuestionario] = useState()
   const [cliente, setCliente] = useState()
   const [cuestResp, setcuestResp] = useState([])
   const [preguntasState, setPreguntasState] = useState()
 
   useEffect(() => {
-    fetchCuestionarios()
-  }, [fetchCuestionarios])
-
-  useEffect(() => {
     if (!id) return
-    if (cuestionarios.length === 0) return
     if (preguntas.length === 0) return
     setcuestResp([])
-    setCuestionario(cuestionarios.find((item) => item.id === Number(id)))
+    setCuestionario(getCuestionario(id))
     setPreguntasState(preguntas)
-  }, [id, cuestionarios, preguntas])
+  }, [id, preguntas])
 
   const handleSubmit = async (e) => {
     e.preventDefault()

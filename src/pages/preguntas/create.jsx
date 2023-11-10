@@ -10,6 +10,7 @@ import { useRouter } from 'next/router'
 import CheckControl from '@/components/formControls/CheckControl'
 
 import protectedRoute from '@/lib/auth/protectedRoute'
+import preguntasState from '@/lib/store/preguntas'
 export const getServerSideProps = protectedRoute()
 
 export default function preguntasCreate () {
@@ -49,6 +50,7 @@ function FormCreatePregunta ({ initialValues = {} }) {
   }
   const [form, setForm] = useState(INITIAL_FORM)
   const [encadenarPreg, setEncadenarPreg] = useState(false)
+  const { reloadService } = preguntasState()
 
   useEffect(() => {
     if (!initialValues?.id) return
@@ -110,6 +112,7 @@ function FormCreatePregunta ({ initialValues = {} }) {
       })
       setForm(INITIAL_FORM)
       setEncadenarPreg(false)
+      reloadService()
     } catch (error) {
       console.log(error)
       Swaly.fire({
@@ -122,6 +125,7 @@ function FormCreatePregunta ({ initialValues = {} }) {
   const updateFunction = useCallback(async (form, id) => {
     try {
       await axios.put('/api/preguntas', { ...form, id: Number(id) })
+      reloadService()
       Swaly.fire({
         icon: 'success',
         title: 'Pregunta Actualizada!'

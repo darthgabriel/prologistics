@@ -6,7 +6,7 @@ import { ReactSwal, Swaly } from '@/lib/toastSwal'
 import ConstruirMenu from '@/components/ConstruirMenu'
 import { useRouter } from 'next/router'
 import InputControl from '@/components/formControls/InputControl'
-import { preguntasStore } from '@/lib/store/preguntas'
+import preguntasState from '@/lib/store/preguntas'
 export const getServerSideProps = protectedRoute()
 
 export const menuPreguntas = [
@@ -26,11 +26,7 @@ const submenu = [
 ]
 
 export default function preguntasRead () {
-  const { preguntas, fetchPreguntas } = preguntasStore((state) => state)
-
-  useEffect(() => {
-    fetchPreguntas()
-  }, [fetchPreguntas])
+  const { preguntas } = preguntasState()
 
   return (
     <>
@@ -54,6 +50,12 @@ export default function preguntasRead () {
 
 function PreguntasTable ({ preguntas: preguntasState }) {
   const [preguntas, setPreguntas] = useState(preguntasState)
+
+  useEffect(() => {
+    if (preguntasState.length === 0) return
+    setPreguntas(preguntasState)
+  }, [preguntasState])
+
   return (
     <table className='table table-striped table-hover table-leidy'>
       <thead>
@@ -135,8 +137,8 @@ function Buscador ({ preguntasState, setPreguntas }) {
 }
 
 function PreguntaRow ({ pregunta }) {
-  const [mostrarRow, setMostrarRow] = useState(true)
   const router = useRouter()
+  const { deletePregunta } = preguntasState()
 
   const handleView = () => {
     ReactSwal.fire({
@@ -165,13 +167,27 @@ function PreguntaRow ({ pregunta }) {
   }
 
   const handleDelete = async () => {
+    Swaly.fire({
+      icon: 'warning',
+      text: '¿Esta seguro de eliminar esta pregunta?',
+      showDenyButton: true,
+      confirmButtonText: 'Si, eliminar',
+      denyButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteService()
+      }
+    })
+  }
+
+  const deleteService = async () => {
     try {
       await axios.delete('/api/preguntas/', { data: { id: pregunta.id } })
       Swaly.fire({
         icon: 'success',
         text: 'Pregunta eliminada con exito'
       })
-      setMostrarRow(false)
+      deletePregunta(pregunta.id)
     } catch (error) {
       console.log(error)
       Swaly.fire({
@@ -181,7 +197,6 @@ function PreguntaRow ({ pregunta }) {
     }
   }
 
-  if (!mostrarRow) return null
   return (
     <tr>
       <th scope='row'>{pregunta.id}</th>

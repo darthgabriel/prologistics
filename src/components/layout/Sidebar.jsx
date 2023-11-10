@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import useUser from '@/hooks/useUser'
-import { cuestionariosStore } from '@/lib/store/cuestionarios'
+import cuestionariosState from '@/lib/store/cuestionarios'
 
 const GUEST_MENU = [
   {
@@ -37,11 +37,7 @@ const ADMIN_MENU = [
 export default function Sidebar () {
   const [isAuth, setIsAuth] = useState(false)
   const { user } = useUser()
-  const { cuestionarios: encuestas, fetchCuestionarios } = cuestionariosStore((state) => state)
-
-  useEffect(() => {
-    fetchCuestionarios()
-  }, [fetchCuestionarios])
+  const { cuestionarios: encuestas } = cuestionariosState()
 
   useEffect(() => {
     setIsAuth(false)

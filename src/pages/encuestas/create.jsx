@@ -7,18 +7,13 @@ import InputControl from '@/components/formControls/InputControl'
 import { ReactSwal, Swaly } from '@/lib/toastSwal'
 import axios from 'axios'
 import { useRouter } from 'next/router'
-import { cuestionariosStore } from '@/lib/store/cuestionarios'
+import cuestionariosState from '@/lib/store/cuestionarios'
 export const getServerSideProps = protectedRoute()
 
 export default function encuestasCreate () {
   const router = useRouter()
   const { id } = router.query
   const [initialCuestionario, setInitialCuestionario] = useState()
-  const { fetchCuestionarios } = cuestionariosStore((state) => state)
-
-  useEffect(() => {
-    fetchCuestionarios()
-  }, [fetchCuestionarios])
 
   useEffect(() => {
     if (!id) return
@@ -65,7 +60,7 @@ function FormCreateEncuestas ({ initialCuestionario }) {
   const [preguntasDisponibles, setPreguntasDisponibles] = useState([])
   const [preguntasState, setPreguntasState] = useState([])
   const router = useRouter()
-  const reloadService = cuestionariosStore((state) => state.reloadService)
+  const { reloadService } = cuestionariosState()
 
   useEffect(() => {
     fetchPreguntas()

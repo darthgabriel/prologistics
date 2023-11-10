@@ -4,8 +4,8 @@ import axios from 'axios'
 import protectedRoute from '@/lib/auth/protectedRoute'
 import { useRouter } from 'next/router'
 import moment from 'moment/moment'
-import { preguntasStore } from '@/lib/store/preguntas'
-import { clientesStore } from '@/lib/store/clientes'
+import clientesState from '@/lib/store/clientes'
+import preguntasState from '@/lib/store/preguntas'
 export const getServerSideProps = protectedRoute()
 
 const getCuestionarios = async () => {
@@ -22,16 +22,11 @@ export default function clientesRead () {
   const router = useRouter()
   const { id } = router.query
   const [cliente, setCliente] = useState()
-  const { clientes } = clientesStore((state) => state)
+  const { clientes } = clientesState()
   const [cuestionarioSelected, setCuestionarioSelected] = useState()
   const [cuestionariosState, setCuestionariosState] = useState([])
-  const { fetchPreguntas } = preguntasStore((state) => state)
 
   if (!id) return null
-
-  useEffect(() => {
-    fetchPreguntas()
-  }, [fetchPreguntas])
 
   useEffect(() => {
     if (!clientes.length === 0) return
@@ -206,7 +201,7 @@ function CuestionarioInfo ({ cuestionario, setCuestionarioSelected }) {
 }
 
 function CuestionarioItem ({ cuestionario }) {
-  const preguntas = preguntasStore((state) => state.preguntas)
+  const { preguntas } = preguntasState()
   const [formatRrespuesta, setFormatRespuesta] = useState('')
 
   useEffect(() => {

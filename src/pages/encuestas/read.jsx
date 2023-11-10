@@ -1,11 +1,9 @@
-import axios from 'axios'
 import { Swaly } from '@/lib/toastSwal'
 import ConstruirMenu from '@/components/ConstruirMenu'
 
 import protectedRoute from '@/lib/auth/protectedRoute'
 import { useRouter } from 'next/router'
-import { cuestionariosStore } from '@/lib/store/cuestionarios'
-import { useEffect } from 'react'
+import cuestionariosState from '@/lib/store/cuestionarios'
 export const getServerSideProps = protectedRoute()
 
 export const menuEncuestas = [
@@ -25,12 +23,7 @@ const submenu = [
 ]
 
 export default function encuestasRead () {
-  const encuestas = cuestionariosStore((state) => state.cuestionarios)
-  const { fetchCuestionarios } = cuestionariosStore((state) => state)
-
-  useEffect(() => {
-    fetchCuestionarios()
-  }, [fetchCuestionarios])
+  const { cuestionarios: encuestas } = cuestionariosState()
 
   return (
     <>
@@ -53,7 +46,7 @@ export default function encuestasRead () {
 }
 
 function EncuestasTable ({ encuestas }) {
-  const reloadService = cuestionariosStore((state) => state.reloadService)
+  const { eliminarCuestionario } = cuestionariosState()
   const router = useRouter()
 
   const handleEliminar = (id) => {
@@ -65,34 +58,9 @@ function EncuestasTable ({ encuestas }) {
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
-        eliminar(id)
+        eliminarCuestionario(id)
       }
     })
-  }
-
-  const eliminar = async (id) => {
-    try {
-      await axios.delete('/api/encuestas/', {
-        params: {
-          id
-        }
-      })
-      Swaly.fire({
-        icon: 'success',
-        text: 'Cuestionario eliminado correctamente'
-      })
-        .then((r) => {
-          if (r.isDismissed || r.isConfirmed) {
-            reloadService()
-          }
-        })
-    } catch (error) {
-      console.log(error)
-      Swaly.fire({
-        icon: 'error',
-        text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al eliminar el cuestionario'
-      })
-    }
   }
 
   const handleEditar = (id) => {
