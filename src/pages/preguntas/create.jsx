@@ -1,7 +1,6 @@
 import InputControl from '@/components/formControls/InputControl'
 import RadioControl from '@/components/formControls/RadioControl'
 import { Swaly } from '@/lib/toastSwal'
-import axios from 'axios'
 import React, { useCallback, useEffect, useState } from 'react'
 
 import ConstruirMenu from '@/components/ConstruirMenu'
@@ -10,7 +9,8 @@ import { useRouter } from 'next/router'
 import CheckControl from '@/components/formControls/CheckControl'
 
 import protectedRoute from '@/lib/auth/protectedRoute'
-import preguntasState from '@/lib/store/preguntas'
+import preguntasState, { usePreguntaCreate, usePreguntaUpdate } from '@/lib/store/preguntas'
+
 export const getServerSideProps = protectedRoute()
 
 export default function preguntasCreate () {
@@ -39,7 +39,6 @@ export default function preguntasCreate () {
 }
 
 function FormCreatePregunta ({ initialValues = {} }) {
-  const router = useRouter()
   const INITIAL_FORM = {
     titulo: '',
     isTexto: true,
@@ -50,7 +49,8 @@ function FormCreatePregunta ({ initialValues = {} }) {
   }
   const [form, setForm] = useState(INITIAL_FORM)
   const [encadenarPreg, setEncadenarPreg] = useState(false)
-  const { reloadService } = preguntasState()
+  const { createPregunta, isLoading: isLoadingCreate } = usePreguntaCreate()
+  const { updatePregunta, isLoading: isLoadingUpdate } = usePreguntaUpdate()
 
   useEffect(() => {
     if (!initialValues?.id) return
@@ -105,14 +105,9 @@ function FormCreatePregunta ({ initialValues = {} }) {
 
   const createFunction = useCallback(async (form) => {
     try {
-      await axios.post('/api/preguntas', form)
-      Swaly.fire({
-        icon: 'success',
-        title: 'Pregunta Creada!'
-      })
+      await createPregunta(form)
       setForm(INITIAL_FORM)
       setEncadenarPreg(false)
-      reloadService()
     } catch (error) {
       console.log(error)
       Swaly.fire({
@@ -124,13 +119,13 @@ function FormCreatePregunta ({ initialValues = {} }) {
 
   const updateFunction = useCallback(async (form, id) => {
     try {
-      await axios.put('/api/preguntas', { ...form, id: Number(id) })
-      reloadService()
-      Swaly.fire({
-        icon: 'success',
-        title: 'Pregunta Actualizada!'
-      })
-        .then(() => router.push('/preguntas/read'))
+      await updatePregunta({ ...form, id: Number(id) })
+      // await axios.put('/api/preguntas', { ...form, id: Number(id) })
+      // Swaly.fire({
+      //   icon: 'success',
+      //   title: 'Pregunta Actualizada!'
+      // })
+      //   .then(() => router.push('/preguntas/read'))
     } catch (error) {
       console.log(error)
       Swaly.fire({
@@ -176,7 +171,7 @@ function FormCreatePregunta ({ initialValues = {} }) {
           )
         : null}
       <div className='row'>
-        <button className='btn btn-primary' type='submit'>
+        <button className='btn btn-primary' type='submit' disabled={isLoadingCreate || isLoadingUpdate}>
           Guardar
         </button>
       </div>
@@ -232,6 +227,7 @@ function SeleccionesForm ({ form, setForm }) {
 }
 
 function EncadenarPregunta ({ setForm, form }) {
+  const { preguntas: data } = preguntasState()
   const handleBuscarPregunta = async (e) => {
     e.preventDefault()
     try {
@@ -247,7 +243,6 @@ function EncadenarPregunta ({ setForm, form }) {
           text: 'Debe crear al menos dos opcion'
         })
       }
-      const { data } = await axios.get('/api/preguntas')
       const preguntasDisp = data.filter((pregunta) => pregunta.titulo !== String(form.titulo).toLowerCase().trim())
       const pNoEncadenadas = preguntasDisp.filter((p) => p.id_pregCadena === null)
       // preguntas q no son cadenas

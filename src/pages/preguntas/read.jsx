@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
 
 import protectedRoute from '@/lib/auth/protectedRoute'
-import axios from 'axios'
 import { ReactSwal, Swaly } from '@/lib/toastSwal'
 import ConstruirMenu from '@/components/ConstruirMenu'
 import { useRouter } from 'next/router'
 import InputControl from '@/components/formControls/InputControl'
-import preguntasState from '@/lib/store/preguntas'
+import preguntasState, { usePreguntaDelete } from '@/lib/store/preguntas'
 export const getServerSideProps = protectedRoute()
 
 export const menuPreguntas = [
@@ -33,15 +32,12 @@ export default function preguntasRead () {
       <ConstruirMenu menu={menuPreguntas} submenu={submenu} />
       <div className='card'>
         <div className='card-body'>
-          {preguntas.length > 0
-            ? (
-              <PreguntasTable preguntas={preguntas} />
-              )
-            : (
-              <div className='d-flex justify-content-center'>
-                <div className='spinner-border text-primary' role='status' />
-              </div>
-              )}
+          {Boolean(preguntas?.length) && <PreguntasTable preguntas={preguntas} />}
+          {!preguntas?.length && (
+            <div className='d-flex justify-content-center'>
+              <div className='spinner-border text-primary' role='status' />
+            </div>
+          )}
         </div>
       </div>
     </>
@@ -138,7 +134,7 @@ function Buscador ({ preguntasState, setPreguntas }) {
 
 function PreguntaRow ({ pregunta }) {
   const router = useRouter()
-  const { deletePregunta } = preguntasState()
+  const { deletePregunta, isLoading: isLoadingDelete } = usePreguntaDelete()
 
   const handleView = () => {
     ReactSwal.fire({
@@ -182,12 +178,13 @@ function PreguntaRow ({ pregunta }) {
 
   const deleteService = async () => {
     try {
-      await axios.delete('/api/preguntas/', { data: { id: pregunta.id } })
-      Swaly.fire({
-        icon: 'success',
-        text: 'Pregunta eliminada con exito'
-      })
-      deletePregunta(pregunta.id)
+      await deletePregunta({ id: pregunta.id })
+      // await axios.delete('/api/preguntas/', { data: { id: pregunta.id } })
+      // Swaly.fire({
+      //   icon: 'success',
+      //   text: 'Pregunta eliminada con exito'
+      // })
+      // deletePregunta(pregunta.id)
     } catch (error) {
       console.log(error)
       Swaly.fire({
@@ -223,6 +220,7 @@ function PreguntaRow ({ pregunta }) {
           <button
             className='btn btn-primary btn-sm'
             onClick={handleDelete}
+            disabled={isLoadingDelete}
           >
             <i className='bi bi-trash-fill' />
           </button>

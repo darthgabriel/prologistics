@@ -3,13 +3,24 @@ import React, { useState } from 'react'
 import protectedRoute from '@/lib/auth/protectedRoute'
 import { useRouter } from 'next/router'
 import clientesState from '@/lib/store/clientes'
+import ConstruirMenu from '@/components/ConstruirMenu'
 export const getServerSideProps = protectedRoute()
+
+export const menuClientes = [
+  {
+    name: 'Clientes',
+    icon: 'bi bi-people-fill',
+    path: '/clientes/read'
+  }
+]
 
 export default function clientesRead () {
   const { clientes } = clientesState()
 
   return (
     <>
+      <ConstruirMenu menu={menuClientes} />
+
       {clientes.length > 0
         ? (
           <ClientesTables clientes={clientes} />

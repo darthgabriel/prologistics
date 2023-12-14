@@ -1,22 +1,15 @@
+/* eslint-disable no-extra-boolean-cast */
 import React, { useEffect, useState } from 'react'
-import axios from 'axios'
 
 import protectedRoute from '@/lib/auth/protectedRoute'
 import { useRouter } from 'next/router'
 import moment from 'moment/moment'
 import clientesState from '@/lib/store/clientes'
 import preguntasState from '@/lib/store/preguntas'
+import ConstruirMenu from '@/components/ConstruirMenu'
+import { menuClientes } from '.'
+import cuestionariosRespondidos from '@/lib/store/cuestionariosRespondidos'
 export const getServerSideProps = protectedRoute()
-
-const getCuestionarios = async () => {
-  try {
-    const { data } = await axios.get('/api/cuestionarios/')
-    return data
-  } catch (error) {
-    console.log(error)
-  }
-  return []
-}
 
 export default function clientesRead () {
   const router = useRouter()
@@ -24,7 +17,7 @@ export default function clientesRead () {
   const [cliente, setCliente] = useState()
   const { clientes } = clientesState()
   const [cuestionarioSelected, setCuestionarioSelected] = useState()
-  const [cuestionariosState, setCuestionariosState] = useState([])
+  const { cuestionariosRespondidos: cuestionariosState } = cuestionariosRespondidos()
 
   if (!id) return null
 
@@ -35,16 +28,9 @@ export default function clientesRead () {
     setCliente(clienteFind)
   }, [clientes])
 
-  useEffect(() => {
-    if (!cliente) return
-    getCuestionarios()
-      .then((data) => {
-        setCuestionariosState(data)
-      })
-  }, [cliente])
-
   return (
     <>
+      <ConstruirMenu menu={menuClientes} />
       {cliente
         ? (
           <div className='card'>
@@ -206,12 +192,16 @@ function CuestionarioItem ({ cuestionario }) {
 
   useEffect(() => {
     if (!cuestionario) return
-    const pregunta = preguntas.find((pregunta) => pregunta.id === cuestionario.id_pregunta)
+    if (!Boolean(preguntas.length)) return
+    const pregunta = preguntas.find((pregunta) => {
+      return pregunta.id === cuestionario.id_pregunta
+    })
+    if (!pregunta) return
     if (pregunta.isFecha) {
       return setFormatRespuesta(moment(cuestionario.respuesta).format('MM/DD/YYYY'))
     }
     return setFormatRespuesta(cuestionario.respuesta)
-  }, [cuestionario])
+  }, [cuestionario, preguntas])
 
   return (
     <tr>

@@ -3,18 +3,18 @@ import { Swaly } from '../toastSwal'
 import { useQuery } from '@tanstack/react-query'
 
 // hook
-export default function clientesState () {
-  const { isLoading, data: clientes } = useQuery({ queryKey: ['clientes'], queryFn: fetchClientes })
+export default function cuestionariosRespondidos () {
+  const { isLoading, data: cuestionariosRespondidos } = useQuery({ queryKey: ['cuestionariosRespondidos'], queryFn: fetchCuestionariosRespondidos })
 
   return {
-    clientes: isLoading ? [] : clientes
+    cuestionariosRespondidos: isLoading ? [] : cuestionariosRespondidos
   }
 }
 
 // services
-const fetchClientes = async () => {
+const fetchCuestionariosRespondidos = async () => {
   try {
-    const { data } = await axios.get('/api/clientes/')
+    const { data } = await axios.get('/api/cuestionarios/')
     return data
   } catch (error) {
     console.log(error)
