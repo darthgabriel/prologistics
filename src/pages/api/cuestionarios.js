@@ -10,6 +10,7 @@ export default function (req, res) {
 
   if (method === 'GET') return getAllCuestionariosRespondidos(req, res)
   if (method === 'POST') return createRepuestas(req, res)
+  if (method === 'DELETE') return deleteCuestionario(req, res)
 
   return res.status(401).json({ error: 'NO PERMITIDO' })
 }
@@ -90,4 +91,22 @@ export const getAllEncuestasRespondidas = async () => {
   })
   await prisma.$disconnect()
   return encuestasRespondidas
+}
+
+const deleteCuestionario = async (req, res) => {
+  const { body: data } = req
+  try {
+    await prisma.prologistics_cuestionarios.deleteMany({
+      where: {
+        id_cliente: Number(data.id_cliente),
+        id_encuesta: Number(data.id_encuesta)
+      }
+    })
+    return res.status(200).json({ status: 'OK' })
+  } catch (error) {
+    console.error('🚀 ~ error:', error)
+    return res.status(401).json({ error: error.message })
+  } finally {
+    await prisma.$disconnect()
+  }
 }

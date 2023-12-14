@@ -12,6 +12,7 @@ export default function InputControl (props) {
         name={props.name}
         value={props.value}
         onChange={props.onChange}
+        {...props}
       />
     </>
   )

@@ -8,7 +8,8 @@ import clientesState from '@/lib/store/clientes'
 import preguntasState from '@/lib/store/preguntas'
 import ConstruirMenu from '@/components/ConstruirMenu'
 import { menuClientes } from '.'
-import cuestionariosRespondidos from '@/lib/store/cuestionariosRespondidos'
+import cuestionariosRespondidos, { useCuestionarioRespondidoDelete } from '@/lib/store/cuestionariosRespondidos'
+import { Swaly } from '@/lib/toastSwal'
 export const getServerSideProps = protectedRoute()
 
 export default function clientesRead () {
@@ -19,14 +20,13 @@ export default function clientesRead () {
   const [cuestionarioSelected, setCuestionarioSelected] = useState()
   const { cuestionariosRespondidos: cuestionariosState } = cuestionariosRespondidos()
 
-  if (!id) return null
-
   useEffect(() => {
+    if (!id) return
     if (!clientes.length === 0) return
-    const clienteFind = clientes.find((cliente) => cliente.id === Number(router.query.id))
-    if (!clienteFind) return router.push('/clientes/read')
+    const clienteFind = clientes.find((cliente) => cliente.id === Number(id))
+    if (!clienteFind) return
     setCliente(clienteFind)
-  }, [clientes])
+  }, [clientes, id])
 
   return (
     <>
@@ -138,11 +138,32 @@ function CuestionariosRespondidos ({ idCliente, cuestionariosState, setCuestiona
 
 function CuestionarioInfo ({ cuestionario, setCuestionarioSelected }) {
   const [tituloCuestionario, setTituloCuestionario] = useState('')
+  const { deleteCuestionario, isLoading: isLoadingDelete } = useCuestionarioRespondidoDelete()
 
   useEffect(() => {
     if (!cuestionario.length === 0) return
     setTituloCuestionario(cuestionario[0].tituloCuestionario)
   }, [cuestionario])
+
+  const handleDelete = () => {
+    Swaly.fire({
+      icon: 'warning',
+      title: '¿Está seguro de eliminar este cuestionario?',
+      text: 'El Cliente Debera llenarlo Nuevamente',
+      showCancelButton: true,
+      confirmButtonText: 'Si, eliminar',
+      cancelButtonText: 'Cancelar'
+    })
+      .then((r) => {
+        if (r.isConfirmed) {
+          deleteCuestionario({
+            id_encuesta: cuestionario[0].id_encuesta,
+            id_cliente: cuestionario[0].id_cliente
+          })
+        }
+      })
+  }
+
   return (
     <>
       <div className='d-flex justify-content-between'>
@@ -181,6 +202,15 @@ function CuestionarioInfo ({ cuestionario, setCuestionarioSelected }) {
         >
           <i className='bi bi-printer-fill' />
         </button>
+        <button
+          type='button'
+          className='btn btn-danger ms-2'
+          onClick={handleDelete}
+          disabled={isLoadingDelete}
+        >
+          <i className='bi bi-trash-fill' />
+        </button>
+
       </div>
     </>
   )

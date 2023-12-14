@@ -3,7 +3,7 @@ import ConstruirMenu from '@/components/ConstruirMenu'
 
 import protectedRoute from '@/lib/auth/protectedRoute'
 import { useRouter } from 'next/router'
-import cuestionariosState from '@/lib/store/cuestionarios'
+import cuestionariosState, { useDeleteCuestionario } from '@/lib/store/cuestionarios'
 export const getServerSideProps = protectedRoute()
 
 export const menuEncuestas = [
@@ -46,8 +46,8 @@ export default function encuestasRead () {
 }
 
 function EncuestasTable ({ encuestas }) {
-  const { eliminarCuestionario } = cuestionariosState()
   const router = useRouter()
+  const { deleteCuestionario, isLoading: isLoadingDelete } = useDeleteCuestionario()
 
   const handleEliminar = (id) => {
     Swaly.fire({
@@ -58,7 +58,7 @@ function EncuestasTable ({ encuestas }) {
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
-        eliminarCuestionario(id)
+        deleteCuestionario(id)
       }
     })
   }
@@ -96,6 +96,7 @@ function EncuestasTable ({ encuestas }) {
                   className='btn btn-sm btn-danger'
                   type='button'
                   onClick={() => handleEliminar(encuesta.id)}
+                  disabled={isLoadingDelete}
                 >
                   <i className='bi bi-trash-fill' />
                 </button>

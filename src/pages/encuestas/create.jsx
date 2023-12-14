@@ -5,36 +5,22 @@ import ConstruirMenu from '@/components/ConstruirMenu'
 import { menuEncuestas } from './read'
 import InputControl from '@/components/formControls/InputControl'
 import { ReactSwal, Swaly } from '@/lib/toastSwal'
-import axios from 'axios'
 import { useRouter } from 'next/router'
-import cuestionariosState from '@/lib/store/cuestionarios'
+import preguntasState from '@/lib/store/preguntas'
+import { useCuestionario, useCuestionarioCreate } from '@/lib/store/cuestionarios'
+
 export const getServerSideProps = protectedRoute()
 
 export default function encuestasCreate () {
   const router = useRouter()
   const { id } = router.query
   const [initialCuestionario, setInitialCuestionario] = useState()
+  const { cuestionario } = useCuestionario(id)
 
   useEffect(() => {
-    if (!id) return
-    fetchEncuesta()
-  }, [id])
-
-  const fetchEncuesta = useCallback(async () => {
-    try {
-      const { data } = await axios.get('/api/encuestas/')
-      if (data.length === 0) return
-      const encuesta = data.find(encuesta => encuesta.id === Number(id))
-      if (!encuesta) return
-      setInitialCuestionario(encuesta)
-    } catch (error) {
-      console.log(error)
-      Swaly.fire({
-        icon: 'error',
-        text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al cargar la encuesta'
-      })
-    }
-  }, [id])
+    if (!cuestionario) return
+    setInitialCuestionario(cuestionario)
+  }, [cuestionario])
 
   return (
     <>
@@ -55,16 +41,17 @@ function FormCreateEncuestas ({ initialCuestionario }) {
   const INITIAL_FORM = {
     titulo: ''
   }
+  const { preguntas: preguntasDisponibles } = preguntasState()
   const [form, setForm] = useState(INITIAL_FORM)
   const [preguntas, setPreguntas] = useState([])
-  const [preguntasDisponibles, setPreguntasDisponibles] = useState([])
-  const [preguntasState, setPreguntasState] = useState([])
+  const [preguntasComponent, setPreguntasState] = useState([])
   const router = useRouter()
-  const { reloadService } = cuestionariosState()
+  const { createCuestionario, isLoading: isLoadingCreate } = useCuestionarioCreate()
 
   useEffect(() => {
-    fetchPreguntas()
-  }, [])
+    if (!preguntasDisponibles.length) return
+    setPreguntasState(preguntasDisponibles)
+  }, [preguntasDisponibles])
 
   useEffect(() => {
     if (!initialCuestionario) return
@@ -90,7 +77,7 @@ function FormCreateEncuestas ({ initialCuestionario }) {
     if (preguntas.length === 0) return
     // eliminar de disponibles preguntas ya usadas
     const preguntasUsadas = preguntas.map(pregunta => pregunta.id_pregunta)
-    const preguntasDisponiblesNew = preguntasState.filter(pregunta => !preguntasUsadas.includes(pregunta.id))
+    const preguntasDisponiblesNew = preguntasComponent.filter(pregunta => !preguntasUsadas.includes(pregunta.id))
     setPreguntasState(preguntasDisponiblesNew)
   }, [preguntas])
 
@@ -105,48 +92,56 @@ function FormCreateEncuestas ({ initialCuestionario }) {
     return cadena
   }
 
-  const fetchPreguntas = useCallback(async () => {
-    try {
-      const { data } = await axios.get('/api/preguntas')
-      if (data.length === 0) throw new Error('No hay preguntas disponibles')
-      setPreguntasDisponibles(data)
-      setPreguntasState(data)
-    } catch (error) {
-      console.log(error)
-      ReactSwal.fire({
-        icon: 'error',
-        text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al cargar las preguntas'
-      })
-    }
-  }, [])
+  // const fetchPreguntas = useCallback(async () => {
+  //   try {
+  //     const { data } = await axios.get('/api/preguntas')
+  //     if (data.length === 0) throw new Error('No hay preguntas disponibles')
+  //     setPreguntasDisponibles(data)
+  //     setPreguntasState(data)
+  //   } catch (error) {
+  //     console.log(error)
+  //     ReactSwal.fire({
+  //       icon: 'error',
+  //       text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al cargar las preguntas'
+  //     })
+  //   }
+  // }, [])
 
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault()
     if (form.titulo === '') return Swaly.fire({ icon: 'error', text: 'Ingrese el titulo del cuestionario' })
     if (preguntas.length === 0) return Swaly.fire({ icon: 'error', text: 'Ingrese al menos una pregunta' })
-    try {
-      await axios.post('/api/encuestas', {
-        titulo: form.titulo,
-        preguntas: preguntas.filter(p => p.isCadena === false),
-        update: initialCuestionario ? initialCuestionario.id : null
-      })
-      Swaly.fire({
-        icon: 'success',
-        text: initialCuestionario ? 'Cuestionario actualizado' : 'Cuestionario creado'
-      })
-        .then((r) => {
-          if (r.isDismissed || r.isConfirmed) {
-            reloadService()
-            router.push('/encuestas/read')
-          }
-        })
-    } catch (error) {
-      console.log(error)
-      Swaly.fire({
-        icon: 'error',
-        text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al crear la encuesta'
-      })
-    }
+
+    createCuestionario({
+      titulo: form.titulo,
+      preguntas: preguntas.filter(p => p.isCadena === false),
+      update: initialCuestionario ? initialCuestionario.id : null
+    })
+    router.push('/encuestas/read')
+
+    // try {
+    //   await axios.post('/api/encuestas', {
+    //     titulo: form.titulo,
+    //     preguntas: preguntas.filter(p => p.isCadena === false),
+    //     update: initialCuestionario ? initialCuestionario.id : null
+    //   })
+    //   Swaly.fire({
+    //     icon: 'success',
+    //     text: initialCuestionario ? 'Cuestionario actualizado' : 'Cuestionario creado'
+    //   })
+    //     .then((r) => {
+    //       if (r.isDismissed || r.isConfirmed) {
+    //         // reloadService()
+    //         router.push('/encuestas/read')
+    //       }
+    //     })
+    // } catch (error) {
+    //   console.log(error)
+    //   Swaly.fire({
+    //     icon: 'error',
+    //     text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al crear la encuesta'
+    //   })
+    // }
   }, [form, preguntas])
 
   return (
@@ -164,12 +159,16 @@ function FormCreateEncuestas ({ initialCuestionario }) {
       <div className='row'>
         <div className='col-sm-12'>
           <h4>Preguntas</h4>
-          <TablePreguntas preguntas={preguntas} setPreguntas={setPreguntas} preguntasDisponibles={preguntasDisponibles} preguntasState={preguntasState} />
+          <TablePreguntas preguntas={preguntas} setPreguntas={setPreguntas} preguntasDisponibles={preguntasDisponibles} preguntasState={preguntasComponent} />
         </div>
       </div>
       <div className='row'>
         <div className='col-sm-12'>
-          <button type='submit' className='btn btn-primary'>Guardar</button>
+          <button
+            type='submit' className='btn btn-primary'
+            disabled={isLoadingCreate}
+          >Guardar
+          </button>
         </div>
       </div>
     </form>

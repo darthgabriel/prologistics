@@ -1,48 +1,95 @@
-import { create } from 'zustand'
 import axios from 'axios'
-import { Swaly } from '../toastSwal'
-import { useEffect } from 'react'
+import { Swaly, Toast } from '../toastSwal'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
-// store
-const cuestionariosStore = create((set, get) => ({
-  cuestionarios: [],
-  setCuestionarios: (cuestionarios) => set({ cuestionarios }),
-  getCuestionario: (id) => {
-    const cuestionario = get().cuestionarios.find((item) => item.id === Number(id))
-    return cuestionario
-  },
-  deleteCuestionario: (id) => {
-    const cuestionariosNew = get().cuestionarios.filter(item => item.id !== Number(id))
-    set({ cuestionarios: cuestionariosNew })
-  }
-}))
-
-// hook
+// hooks
 export default function cuestionariosState () {
-  const { cuestionarios, setCuestionarios, deleteCuestionario, getCuestionario } = cuestionariosStore(state => state)
+  const { isLoading, data: cuestionarios } = useQuery({ queryKey: ['cuestionarios'], queryFn: getCuestionariosService })
 
-  useEffect(() => {
-    console.log('loop')
-    if (cuestionarios.length > 0) return
-    reloadService()
-  }, [])
-
-  const reloadService = () => {
-    getCuestionariosService().then((cuestionarios) => setCuestionarios(cuestionarios))
+  return {
+    cuestionarios: isLoading ? [] : cuestionarios
   }
+}
 
-  const eliminarCuestionario = async (id) => {
-    const resp = await deleteCuestionarioService(id)
-    if (resp) {
-      deleteCuestionario(id)
+export function useCuestionario (id) {
+  const { isLoading, data: cuestionarios } = useQuery({ queryKey: ['cuestionarios'], queryFn: getCuestionariosService })
+
+  return {
+    cuestionario: isLoading ? undefined : cuestionarios.find((cuestionario) => cuestionario.id === Number(id))
+  }
+}
+
+export function useCuestionarioCreate () {
+  const queryClient = useQueryClient()
+  const { mutate: createCuestionario, isLoading } = useMutation({
+    mutationFn: async (data) => {
+      const { data: cuestionario } = await axios.post('/api/encuestas/', data)
+      return cuestionario
+    },
+    onMutate: async () => {
       Swaly.fire({
+        icon: 'info',
+        text: 'Guardando Cuestionario, por favor espere...',
+        showConfirmButton: false
+      })
+    },
+    onSuccess: () => {
+      Toast.fire({
         icon: 'success',
-        text: 'Cuestionario eliminado correctamente'
+        text: 'Cuestionario Guardado'
+      })
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['cuestionarios'] })
+    },
+    onError: (error) => {
+      console.log(error)
+      Swaly.fire({
+        icon: 'error',
+        text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al crear'
       })
     }
-  }
+  })
 
-  return { cuestionarios, reloadService, eliminarCuestionario, getCuestionario }
+  return {
+    createCuestionario,
+    isLoading
+  }
+}
+
+export function useDeleteCuestionario () {
+  const queryClient = useQueryClient()
+  const { mutate: deleteCuestionario, isLoading } = useMutation({
+    mutationFn: deleteCuestionarioService,
+    onMutate: async () => {
+      Swaly.fire({
+        icon: 'info',
+        text: 'Eliminando Cuestionario, por favor espere...',
+        showConfirmButton: false
+      })
+    },
+    onSuccess: () => {
+      Toast.fire({
+        icon: 'success',
+        text: 'Cuestionario eliminada'
+      })
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['cuestionarios'] })
+    },
+    onError: (error) => {
+      console.log(error)
+      Swaly.fire({
+        icon: 'error',
+        text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al eliminar'
+      })
+    }
+  })
+
+  return {
+    deleteCuestionario,
+    isLoading
+  }
 }
 
 // services

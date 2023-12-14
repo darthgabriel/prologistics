@@ -1,30 +1,29 @@
 import InputControl from '@/components/formControls/InputControl'
 import { Swaly } from '@/lib/toastSwal'
-import axios from 'axios'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
-import emailjs from '@emailjs/browser'
-import cuestionariosState from '@/lib/store/cuestionarios'
-import preguntasStateGlobal from '@/lib/store/preguntas'
+import { useCuestionario } from '@/lib/store/cuestionarios'
+import preguntasState from '@/lib/store/preguntas'
+import clientesState from '@/lib/store/clientes'
+import { useCuestionarioRespondidoCreate } from '@/lib/store/cuestionariosRespondidos'
 
 export default function cuestionariosCreate () {
   const router = useRouter()
   const { id } = router.query
 
-  const { getCuestionario } = cuestionariosState()
-  const { preguntas } = preguntasStateGlobal()
+  const { cuestionario: getCuestionario } = useCuestionario(id)
+  const { preguntas } = preguntasState()
   const [cuestionario, setCuestionario] = useState()
   const [cliente, setCliente] = useState()
   const [cuestResp, setcuestResp] = useState([])
-  const [preguntasState, setPreguntasState] = useState()
+  const { createCuestionarioRespondido, isLoading: isLoadingCreate } = useCuestionarioRespondidoCreate()
 
   useEffect(() => {
+    console.log('loop')
     if (!id) return
-    if (preguntas.length === 0) return
     setcuestResp([])
-    setCuestionario(getCuestionario(id))
-    setPreguntasState(preguntas)
-  }, [id, preguntas])
+    setCuestionario(getCuestionario)
+  }, [id, getCuestionario])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -39,41 +38,43 @@ export default function cuestionariosCreate () {
     // verificar que todos los campos de cuestionario esten llenos
     const respuestasObligatorias = cuestResp.filter(item => item.obligatoria === true && item.respuesta === '')
     if (respuestasObligatorias.length > 0) {
-      const preguntaFind = preguntasState.find(item => item.id === respuestasObligatorias[0].id_pregunta)
+      const preguntaFind = preguntas.find(item => item.id === respuestasObligatorias[0].id_pregunta)
       return Swaly.fire({
         icon: 'error',
         text: preguntaFind.titulo + ' es obligatoria'
       })
     }
 
-    try {
-      await axios.post('/api/cuestionarios/', { id, cliente, cuestResp })
-      Swaly.fire({
-        icon: 'success',
-        text: 'Cuestionario guardado, nos contactaremos con ud pronto'
-      })
-        .then(async (r) => {
-          if (r.isDismissed || r.isConfirmed) {
-            router.push('/')
-          }
-        })
+    createCuestionarioRespondido({ id, cliente, cuestResp })
 
-      await emailjs.send(
-        'service_t35i9ew',
-        'template_1zfgevj',
-        {
-          primerNombre: cliente.primerNombre,
-          primerApellido: cliente.primerApellido
-        },
-        'Llr5MWaAAKTsVNvc5'
-      )
-    } catch (error) {
-      console.log(error)
-      Swaly.fire({
-        icon: 'error',
-        text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al guardar'
-      })
-    }
+    // try {
+    //   await axios.post('/api/cuestionarios/', { id, cliente, cuestResp })
+    //   Swaly.fire({
+    //     icon: 'success',
+    //     text: 'Cuestionario guardado, nos contactaremos con ud pronto'
+    //   })
+    //     .then(async (r) => {
+    //       if (r.isDismissed || r.isConfirmed) {
+    //         router.push('/')
+    //       }
+    //     })
+
+    //   await emailjs.send(
+    //     'service_t35i9ew',
+    //     'template_1zfgevj',
+    //     {
+    //       primerNombre: cliente.primerNombre,
+    //       primerApellido: cliente.primerApellido
+    //     },
+    //     'Llr5MWaAAKTsVNvc5'
+    //   )
+    // } catch (error) {
+    //   console.log(error)
+    //   Swaly.fire({
+    //     icon: 'error',
+    //     text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al guardar'
+    //   })
+    // }
   }
 
   return (
@@ -82,11 +83,12 @@ export default function cuestionariosCreate () {
         ? (
           <div className='d-flex flex-column gap-3'>
             <FormCliente setCliente={setCliente} />
-            <FormCuestionario cuestionario={cuestionario} setcuestResp={setcuestResp} preguntasState={preguntasState} />
+            <FormCuestionario cuestionario={cuestionario} setcuestResp={setcuestResp} preguntasState={preguntas} />
             <button
               type='button'
               className='btn btn-primary'
               onClick={handleSubmit}
+              disabled={isLoadingCreate}
             >
               Guardar Cuestionario {' '}
               <i className='bi bi-save' />
@@ -99,6 +101,7 @@ export default function cuestionariosCreate () {
 }
 
 export function FormCliente ({ setCliente }) {
+  const { clientes } = clientesState()
   const [datos, setDatos] = useState({
     cedula: '',
     primerNombre: '',
@@ -116,7 +119,22 @@ export function FormCliente ({ setCliente }) {
     })
   }
 
+  const changeCedula = (e) => {
+    const cliente = clientes?.find(item => item.cedula === e.target.value)
+    if (!cliente) return
+    setDatos({
+      ...datos,
+      primerNombre: cliente.primerNombre,
+      segundoNombre: cliente.segundoNombre,
+      primerApellido: cliente.primerApellido,
+      segundoApellido: cliente.segundoApellido,
+      telefono: cliente.telefono,
+      email: cliente.email
+    })
+  }
+
   useEffect(() => {
+    console.log('loop')
     setCliente(datos)
   }, [datos])
 
@@ -128,25 +146,25 @@ export function FormCliente ({ setCliente }) {
       <div className='card-body'>
         <div className='row row-cols-1 row-cols-lg-4 g-2 g-lg-3'>
           <div className='col'>
-            <InputControl label='ALIEN / SOCIAL / PASSSPORT' name='cedula' type='number' onChange={handleChange} />
+            <InputControl label='ALIEN / SOCIAL / PASSSPORT' name='cedula' type='number' onChange={handleChange} onBlur={changeCedula} />
           </div>
           <div className='col'>
-            <InputControl label='Primer Nombre' name='primerNombre' type='text' onChange={handleChange} />
+            <InputControl label='Primer Nombre' name='primerNombre' type='text' onChange={handleChange} value={datos.primerNombre} />
           </div>
           <div className='col'>
-            <InputControl label='Segundo Nombre' name='segundoNombre' type='text' onChange={handleChange} />
+            <InputControl label='Segundo Nombre' name='segundoNombre' type='text' onChange={handleChange} value={datos.segundoNombre} />
           </div>
           <div className='col'>
-            <InputControl label='Primer Apellido' name='primerApellido' type='text' onChange={handleChange} />
+            <InputControl label='Primer Apellido' name='primerApellido' type='text' onChange={handleChange} value={datos.primerApellido} />
           </div>
           <div className='col'>
-            <InputControl label='Segundo Apellido' name='segundoApellido' type='text' onChange={handleChange} />
+            <InputControl label='Segundo Apellido' name='segundoApellido' type='text' onChange={handleChange} value={datos.segundoApellido} />
           </div>
           <div className='col'>
-            <InputControl label='Telefono' name='telefono' type='text' onChange={handleChange} />
+            <InputControl label='Telefono' name='telefono' type='text' onChange={handleChange} value={datos.telefono} />
           </div>
           <div className='col'>
-            <InputControl label='Email' name='email' type='email' onChange={handleChange} />
+            <InputControl label='Email' name='email' type='email' onChange={handleChange} value={datos.email} />
           </div>
         </div>
       </div>

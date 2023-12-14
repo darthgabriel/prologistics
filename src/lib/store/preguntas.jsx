@@ -32,7 +32,7 @@ export function usePreguntaCreate () {
       })
     },
     onSettled: () => {
-      queryClient.invalidateQueries('preguntas')
+      queryClient.invalidateQueries({ queryKey: ['preguntas'] })
     },
     onError: (error) => {
       console.log(error)
@@ -69,7 +69,7 @@ export function usePreguntaDelete () {
       })
     },
     onSettled: () => {
-      queryClient.invalidateQueries('preguntas')
+      queryClient.invalidateQueries({ queryKey: ['preguntas'] })
     },
     onError: (error) => {
       console.log(error)
@@ -107,7 +107,7 @@ export function usePreguntaUpdate () {
       })
     },
     onSettled: () => {
-      queryClient.invalidateQueries('preguntas')
+      queryClient.invalidateQueries({ queryKey: ['preguntas'] })
     },
     onError: (error) => {
       console.log(error)
