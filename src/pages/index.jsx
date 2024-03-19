@@ -1,9 +1,9 @@
-import React from 'react'
+const appName = process.env.APPNAME
 
 export default function Home () {
   return (
     <div>
-      Prologistics Contactors LLC
+      {appName}
     </div>
   )
 }

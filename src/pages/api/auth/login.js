@@ -1,9 +1,9 @@
 import { withSessionRoute } from '../../../lib/auth/withSession'
 
 const ROUTES = ['/']
-const ID = '1'
-const USERNAME = 'admin'
-const PASSWORD = 'prolo159753'
+const ID = process.env.IDUSER || 1
+const USERNAME = process.env.USERNAME || 'admin'
+const PASSWORD = process.env.USERPASSWORD || 'ocg159753'
 
 export default withSessionRoute(handler)
 
