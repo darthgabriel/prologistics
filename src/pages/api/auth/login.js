@@ -1,13 +1,13 @@
 import { withSessionRoute } from '../../../lib/auth/withSession'
 
-const ROUTES = ['/']
-const ID = process.env.IDUSER || 1
-const USERNAME = process.env.USERNAME || 'admin'
-const PASSWORD = process.env.USERPASSWORD || 'ocg159753'
-
 export default withSessionRoute(handler)
 
 async function handler (req, res) {
+  const ROUTES = ['/']
+  const ID = process.env.LOGINID || 1
+  const USERNAME = process.env.LOGINUSER || 'admin'
+  const PASSWORD = process.env.LOGINPASSWORD || 'ocg159753'
+
   if (req.method === 'POST') {
     const { username, password } = req.body
 
