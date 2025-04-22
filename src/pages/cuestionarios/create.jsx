@@ -12,7 +12,7 @@ export default function cuestionariosCreate () {
   const { id } = router.query
 
   const { cuestionario: getCuestionario } = useCuestionario(id)
-  const { preguntas } = preguntasState()
+  const { preguntas, isLoading: isPreguntas } = preguntasState()
   const [cuestionario, setCuestionario] = useState()
   const [cliente, setCliente] = useState()
   const [cuestResp, setcuestResp] = useState([])
@@ -46,35 +46,6 @@ export default function cuestionariosCreate () {
     }
 
     createCuestionarioRespondido({ id, cliente, cuestResp })
-
-    // try {
-    //   await axios.post('/api/cuestionarios/', { id, cliente, cuestResp })
-    //   Swaly.fire({
-    //     icon: 'success',
-    //     text: 'Cuestionario guardado, nos contactaremos con ud pronto'
-    //   })
-    //     .then(async (r) => {
-    //       if (r.isDismissed || r.isConfirmed) {
-    //         router.push('/')
-    //       }
-    //     })
-
-    //   await emailjs.send(
-    //     'service_t35i9ew',
-    //     'template_1zfgevj',
-    //     {
-    //       primerNombre: cliente.primerNombre,
-    //       primerApellido: cliente.primerApellido
-    //     },
-    //     'Llr5MWaAAKTsVNvc5'
-    //   )
-    // } catch (error) {
-    //   console.log(error)
-    //   Swaly.fire({
-    //     icon: 'error',
-    //     text: JSON.stringify(error?.response?.data) || JSON.stringify(error?.message) || 'Error al guardar'
-    //   })
-    // }
   }
 
   return (
@@ -83,7 +54,7 @@ export default function cuestionariosCreate () {
         ? (
           <div className='d-flex flex-column gap-3'>
             <FormCliente setCliente={setCliente} />
-            <FormCuestionario cuestionario={cuestionario} setcuestResp={setcuestResp} preguntasState={preguntas} />
+            {!isPreguntas && <FormCuestionario cuestionario={cuestionario} setcuestResp={setcuestResp} preguntasState={preguntas} />}
             <button
               type='button'
               className='btn btn-primary'
@@ -182,13 +153,11 @@ function FormCuestionario ({ cuestionario, setcuestResp, preguntasState }) {
       </div>
       <div className='card-body'>
         <div className='row row-cols-1 row-cols-lg-4 g-2 g-lg-3'>
-          {cuestionario.data.map((pregunta, index) => {
-            return (
-              <div className='col' key={index}>
-                <PreguntaRender idPregunta={pregunta.id_pregunta} setcuestResp={setcuestResp} preguntasState={preguntasState} />
-              </div>
-            )
-          }
+          {cuestionario.data.map((pregunta, index) => (
+            <div className='col' key={index}>
+              <PreguntaRender idPregunta={pregunta.id_pregunta} setcuestResp={setcuestResp} preguntasState={preguntasState} />
+            </div>
+          )
           )}
         </div>
       </div>
@@ -197,114 +166,116 @@ function FormCuestionario ({ cuestionario, setcuestResp, preguntasState }) {
 }
 
 export function PreguntaRender ({ idPregunta, setcuestResp, preguntasState }) {
-  const [pregCadena, setPregCadena] = useState(false)
-  const [respuesta, setRespuesta] = useState()
-  const [pregunta, setPregunta] = useState()
+  const [respuesta, setRespuesta] = useState('')
+  const [pregunta, setPregunta] = useState(null)
 
   useEffect(() => {
-    if (!idPregunta) return
-    const preguntaFind = preguntasState.find(item => item.id === idPregunta)
-    setPregunta(preguntaFind)
-  }, [idPregunta])
-
-  useEffect(() => {
-    if (!pregunta) return
-    if (pregunta.id_pregCadena) {
-      setPregCadena(true)
+    if (idPregunta) {
+      const preguntaFind = preguntasState.find(item => item.id === idPregunta)
+      setPregunta(preguntaFind)
     }
-    setcuestResp(prev => {
-      const resp = [...prev]
-      const index = resp.findIndex(item => item.id_pregunta === pregunta.id)
-      if (index === -1) {
-        resp.push({ id_pregunta: pregunta.id, obligatoria: pregunta.obligatoria, respuesta: '' })
-      }
-      return resp
-    })
-  }, [pregunta])
+  }, [idPregunta, preguntasState])
 
   useEffect(() => {
-    if (respuesta) {
-      const toForm = {
-        id_pregunta: pregunta.id,
-        respuesta
-      }
+    if (pregunta) {
       setcuestResp(prev => {
-        const resp = [...prev]
-        const index = resp.findIndex(item => item.id_pregunta === pregunta.id)
+        const updatedResp = [...prev]
+        const index = updatedResp.findIndex(item => item.id_pregunta === pregunta.id)
         if (index === -1) {
-          resp.push(toForm)
-        } else {
-          resp[index] = toForm
+          updatedResp.push({ id_pregunta: pregunta.id, obligatoria: pregunta.obligatoria, respuesta: '' })
         }
-        return resp
+        return updatedResp
       })
-      // si la respuesta es no es el de la condicion eliminar del array
-      if (pregCadena && respuesta !== pregunta.condicion) {
+    }
+  }, [pregunta, setcuestResp])
+
+  useEffect(() => {
+    if (respuesta && pregunta) {
+      const toForm = { id_pregunta: pregunta.id, respuesta }
+      setcuestResp(prev => {
+        const updatedResp = [...prev]
+        const index = updatedResp.findIndex(item => item.id_pregunta === pregunta.id)
+        if (index === -1) {
+          updatedResp.push(toForm)
+        } else {
+          updatedResp[index] = toForm
+        }
+        return updatedResp
+      })
+
+      if (pregunta.id_pregCadena && respuesta !== pregunta.condicion) {
         setcuestResp(prev => {
-          const resp = [...prev]
-          const index = resp.findIndex(item => item.id_pregunta === pregunta.id_pregCadena)
+          const updatedResp = [...prev]
+          const index = updatedResp.findIndex(item => item.id_pregunta === pregunta.id_pregCadena)
           if (index !== -1) {
-            resp.splice(index, 1)
+            updatedResp.splice(index, 1)
           }
-          return resp
+          return updatedResp
         })
       }
     }
-  }, [respuesta])
+  }, [respuesta, pregunta, setcuestResp])
 
-  if (!pregunta) return <></>
+  if (!pregunta) return null
 
-  if (pregunta.isTexto) {
-    return (
-      <>
-        <label className='form-label'>{pregunta.titulo}</label>
-        <input
-          type='text'
-          className='form-control form-control-sm'
-          name={pregunta.pregunta}
-          value={respuesta || ''}
-          onChange={e => setRespuesta(e.target.value)}
-        />
-      </>
-    )
-  }
-
-  if (pregunta.isSeleccion) {
-    return (
-      <>
-        <label className='form-label'>{pregunta.titulo}</label>
-        <select
-          className='form-select'
-          name={pregunta.pregunta}
-          value={respuesta || ''}
-          onChange={e => setRespuesta(e.target.value)}
-        >
-          <option value='' disabled>Seleccione</option>
-          {pregunta.seleccion?.map((item, index) => (
-            <option key={index}>{item.valor}</option>
-          ))}
-        </select>
-        {pregCadena && respuesta === pregunta.condicion && <PreguntaRender idPregunta={pregunta.id_pregCadena} setcuestResp={setcuestResp} preguntasState={preguntasState} />}
-      </>
-    )
-  }
-
-  if (pregunta.isFecha) {
-    return (
-      <>
-        <label className='form-label'>{pregunta.titulo}</label>
-        <input
-          type='date'
-          className='form-control form-control-sm'
-          name={pregunta.pregunta}
-          value={respuesta || ''}
-          onChange={e => setRespuesta(e.target.value)}
-        />
-      </>
-    )
+  const renderInput = () => {
+    switch (true) {
+      case pregunta.isTexto:
+        return (
+          <input
+            type='text'
+            className='form-control form-control-sm'
+            name={pregunta.pregunta}
+            value={respuesta}
+            onChange={e => setRespuesta(e.target.value)}
+          />
+        )
+      case pregunta.isSeleccion:
+        return (
+          <>
+            <select
+              className='form-select'
+              name={pregunta.pregunta}
+              value={respuesta}
+              onChange={e => setRespuesta(e.target.value)}
+            >
+              <option value='' disabled>
+                Seleccione
+              </option>
+              {pregunta.seleccion?.map((item, index) => (
+                <option key={index} value={item.valor}>
+                  {item.valor}
+                </option>
+              ))}
+            </select>
+            {pregunta.id_pregCadena && respuesta === pregunta.condicion && (
+              <PreguntaRender
+                idPregunta={pregunta.id_pregCadena}
+                setcuestResp={setcuestResp}
+                preguntasState={preguntasState}
+              />
+            )}
+          </>
+        )
+      case pregunta.isFecha:
+        return (
+          <input
+            type='date'
+            className='form-control form-control-sm'
+            name={pregunta.pregunta}
+            value={respuesta}
+            onChange={e => setRespuesta(e.target.value)}
+          />
+        )
+      default:
+        return null
+    }
   }
 
   return (
-    <></>
+    <>
+      <label className='form-label'>{pregunta.titulo}</label>
+      {renderInput()}
+    </>
   )
 }
